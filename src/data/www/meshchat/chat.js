@@ -286,7 +286,7 @@ function process_messages() {
         if (messages[i].platform == 'node') {
             row += '<td class="col_node"><a href="http://' + messages[i].node + aredn_domain + ':8080" target="_blank">' + messages[i].node + '</a></td>';
         } else {
-            row += '<td class="col_node"><a href="http://' + messages[i].node + aredn_domain + '" target="_blank">' + messages[i].node + '</a></td>';
+            row += '<td class="col_node"><a href="http://' + messages[i].node + '" target="_blank">' + messages[i].node + '</a></td>';
         }
         row += '</tr>';
 
@@ -377,7 +377,7 @@ function load_users() {
                 if (data[i].platform == 'node') {
                     html += '<td><a href="http://' + data[i].node + aredn_domain + ':8080" target="_blank">' + data[i].node + '</a></td>';
                 } else {
-                    html += '<td><a href="http://' + data[i].node + aredn_domain + '" target="_blank">' + data[i].node + '</a></td>';
+                    html += '<td><a href="http://' + data[i].node + '" target="_blank">' + data[i].node + '</a></td>';
                 }
                 html += '<td>' + format_date(date) + '</td>';
                 html += '</tr>';
