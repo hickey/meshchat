@@ -12,5 +12,5 @@ cd ../control
 tar cfz ../../control.tar.gz .
 cd ../..
 gzip data.tar
-COPYFILE_DISABLE=1 tar cfz meshchat_1.1_all.ipk control.tar.gz data.tar.gz debian-binary
+COPYFILE_DISABLE=1 tar cfz meshchat_1.02-lua_all.ipk control.tar.gz data.tar.gz debian-binary
 rm -rf data.tar.gz control.tar.gz *.deb

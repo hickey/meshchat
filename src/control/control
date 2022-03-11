@@ -1,5 +1,5 @@
 Package: meshchat
-Version: 1.1
+Version: 1.02-lua
 Depends: curl
 Provides:
 Source: package/meshchat
