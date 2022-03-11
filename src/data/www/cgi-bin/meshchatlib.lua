@@ -1,5 +1,6 @@
-local aredn_info = require("aredn.info")
 require("posix.fcntl")
+require("posix.unistd")
+local aredn_info = require("aredn.info")
 
 version = '1.02'
 
@@ -57,6 +58,7 @@ function release_lock()
         l_len = 0
     }
     posix.fcntl.fcntl(lock_fd, posix.fcntl.F_SETLK, unlock)
+    posix.unistd.close(lock_fd)
 end
 
 function file_md5(file)
