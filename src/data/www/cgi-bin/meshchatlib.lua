@@ -17,7 +17,7 @@ function capture(cmd)
 end
 
 function node_name()
-    return aredn_info.nvram_get("node")
+    return aredn_info.get_nvram("node")
 end
 
 function zone_name()
@@ -31,6 +31,8 @@ function zone_name()
     return "MeshChat"
 end
 
+messages_db_file = messages_db_file_orig .. "." .. zone_name()
+
 function get_lock()
     local fh = nixio.open(lock_file, nixio.open_flags("creat", "excl"))
     if not fh then
@@ -41,18 +43,18 @@ function get_lock()
 end
 
 function release_lock()
-    os.remove(lock_file)
+    nixio.fs.remove(lock_file)
 end
 
 function file_md5(file)
     if not nixio.fs.stat(file) then
         return ""
     end
-    local output = capture("md5sum " .. file):match("^(.*)%s")
+    local output = capture("md5sum " .. file):match("^(%S+)%s")
     return output and output or ""
 end
 
-function get_message_db_version()
+function get_messages_db_version()
     for line in io.lines(messages_version_file)
     do
         return line:chomp()
@@ -61,14 +63,14 @@ end
 
 function save_messages_db_version()
     local f = io.open(messages_version_file, "w")
-    f:write(messages_version_file() .. "\n")
+    f:write(get_messages_version_file() .. "\n")
     f:close()
     nixio.fs.chmod(messages_version_file, "666")
 end
 
-function messages_version_file()
+function get_messages_version_file()
     local sum = 0
-    for line in io.line(messages_db_file)
+    for line in io.lines(messages_db_file)
     do
         local key = line:match("^([0-9a-f]+)")
         if key then
@@ -82,17 +84,13 @@ function hash()
     return capture("echo " ..  os.time() .. math.random(99999) .. " | md5sum"):sub(1, 8)
 end
 
-function sort_db(already_locked)
-    if not already_locked then
-        get_lock()
-    end
-
+function sort_db()
     local messages = {}
     for line in io.lines(messages_db_file)
     do
-        local id, epoch = line:match("^(.+)\t(.+)\t")
+        local id, epoch = line:match("^(%S+)\t(%S+)\t")
         messages[#messages + 1] = {
-            epoch = epoch,
+            epoch = tonumber(epoch),
             id = tonumber(id, 16),
             line = line
         }
@@ -106,17 +104,9 @@ function sort_db(already_locked)
         f:write(line.line .. "\n")
     end
     f:close()
-
-    if not already_locked then
-        release_lock()
-    end
 end
 
-function trim_db(already_locked)
-    if not already_locked then
-        get_lock()
-    end
-
+function trim_db()
     local line_count = 0
     for line in io.lines(messages_db_file)
     do
@@ -140,18 +130,14 @@ function trim_db(already_locked)
         f:close()
     end
 
-    os.remove(messages_db_file)
+    nixio.fs.remove(messages_db_file)
     local fi = io.open(meshchat_path .. "/shrink_messages", "r")
     local fo = io.open(messages_db_file, "w")
     fo:write(fi:read("*a"))
     fi:close()
     fo:close()
-    os.remove(meshchat_path .. "/shrink_messages")
+    nixio.fs.remove(meshchat_path .. "/shrink_messages")
     nixio.fs.chmod(messages_db_file, "666")
-
-    if not already_locked then
-        release_lock()
-    end
 end
 
 function file_storage_stats()
@@ -195,11 +181,11 @@ function node_list()
 
     local nodes = {}
     local pattern = "http://(%S+):(%d+)/meshchat|tcp|" .. zone .. "%s"
-    for line in io.open("/var/run/services_olsr")
+    for line in io.lines("/var/run/services_olsr")
     do
         local node, port = line:match(pattern)
         if node and port then
-            if port = "8080" then
+            if port == "8080" then
                 nodes[#nodes + 1] = {
                     platform = "node",
                     node = node:lower(),

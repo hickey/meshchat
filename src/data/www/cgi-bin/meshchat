@@ -1,5 +1,8 @@
 #!/usr/bin/lua
 
+package.path = package.path .. ";/www/cgi-bin/?.lua"
+
+require('luci.http')
 require('luci.sys')
 require("luci.jsonc")
 require("nixio")
@@ -70,8 +73,8 @@ function send_message()
     f:write(hash() .. "\t" .. epoch .. "\t" .. message .. "\t" .. query.call_sign .. "\t" .. node_name() .. "\t" .. platform .. "\t" .. query.channel .. "\n")
     f:close()
 
-    sort_db(true)
-    trim_db(true)
+    sort_db()
+    trim_db()
     save_messages_db_version()
 
     release_lock()
@@ -90,14 +93,14 @@ function messages()
     local messages = {}
     for line in io.lines(messages_db_file)
     do
-        local id, epoch, message, call_sign, node, platform, channel = line:match("^(.+)\t(.+)\t(.+)\t(.+)\t(.+)\t(.+)\t(.+)$")
+        local id, epoch, message, call_sign, node, platform, channel = line:match("^(%S+)\t(%S+)\t([^\t]+)\t([^\t]+)\t(%S*)\t(%S+)\t(.*)$")
         if epoch and #epoch > 0 then
-            messages[#messages] = {
+            messages[#messages + 1] = {
                 id = id,
-                epoch = epoch,
-                message = unpack_message(message),
+                epoch = tonumber(epoch),
+                message = message:gsub("\\n", "\n"):gsub('\\"', '"'),
                 call_sign = call_sign,
-                node = node,
+                node = node .. domain_extension,
                 platform = platform,
                 channel = channel
             }
@@ -114,7 +117,7 @@ function messages()
     end
 
     local epoch = os.time()
-    if query.epoch > epoch then
+    if tonumber(query.epoch) > epoch then
         epoch = query.epoch
     end
 
@@ -138,7 +141,7 @@ function messages()
 
     release_lock()
 
-    table.sort(messages, function(a, b) return a.epoch < b.epoch end)
+    table.sort(messages, function(a, b) return a.epoch > b.epoch end)
 
     print(luci.jsonc.stringify(messages))
 end
@@ -155,13 +158,13 @@ function sync_status()
         local node, epoch = line:match("^(.*)\t(.*)$")
         status[#status + 1] = {
             node = node,
-            epoch = epoch
+            epoch = tonumber(epoch)
         }
     end
 
     release_lock()
 
-    table.sort(status, function(a, b) return a.epoch < b.epoch end)
+    table.sort(status, function(a, b) return a.epoch > b.epoch end)
 
     print(luci.jsonc.stringify(status))
 end
@@ -242,10 +245,10 @@ function users()
         local call_sign, id, node, epoch, platform = line:match("^(.*)\t(.*)\t(.*)\t(.*)\t(.*)$")
         if epoch and #epoch > 0 then
             users[#users + 1] = {
-                epoch = epoch,
+                epoch = tonumber(epoch),
                 id = id,
                 call_sign = call_sign,
-                node = node,
+                node = node .. domain_extension,
                 platform = platform
             }
         end
@@ -255,10 +258,10 @@ function users()
         local call_sign, id, node, epoch, platform = line:match("^(.*)\t(.*)\t(.*)\t(.*)\t(.*)$")
         if epoch and #epoch > 0 then
             users[#users + 1] = {
-                epoch = epoch,
+                epoch = tonumber(epoch),
                 id = id,
                 call_sign = call_sign,
-                node = node,
+                node = node .. domain_extension,
                 platform = platform
             }
         end
@@ -266,7 +269,7 @@ function users()
 
     release_lock()
 
-    table.sort(users, function(a, b) return a.epoch < b.epoch end)
+    table.sort(users, function(a, b) return a.epoch > b.epoch end)
 
     print(luci.jsonc.stringify(users))
 end
@@ -275,7 +278,7 @@ function local_files_raw()
     get_lock()
 
     local tmp_file = meshchat_path .. "/meshchat_files_local"
-    local f = f.open(tmp_file, "w")
+    local f = io.open(tmp_file, "w")
     if not f then
         die("Cannot list local files")
     end
@@ -298,7 +301,7 @@ function local_files_raw()
         print(line .. "\n")
     end
 
-    os.remove(tmp_file)
+    nixio.fs.remove(tmp_file)
 
     release_lock()
 end
@@ -344,7 +347,7 @@ function files()
             file = file,
             epoch = s.mtime,
             size = s.size,
-            node = node,
+            node = node .. domain_extension,
             platform = platform
         }
         files[#files]["local"] = 1
@@ -358,9 +361,9 @@ function files()
                 if epoch and #epoch > 0 then
                     files[#files + 1] = {
                         file = name,
-                        epoch = epoch,
+                        epoch = tonumber(epoch),
                         size = size,
-                        node = node,
+                        node = node .. domain_extension,
                         platform = platform
                     }
                     files[#files]["local"] = 0
@@ -371,7 +374,7 @@ function files()
 
     release_lock()
 
-    table.sort(files, function(a, b) return a.epoch < b.epoch end)
+    table.sort(files, function(a, b) return a.epoch > b.epoch end)
 
     print(luci.jsonc.stringify({
         stats = file_storage_stats(),
@@ -380,7 +383,7 @@ function files()
 end
 
 function delete_file()
-    os.remove(local_files_dir .. "/" .. query.file)
+    nixio.fs.remove(local_files_dir .. "/" .. query.file)
     print("Content-type: application/json\r")
     print("\r")
     print([[{"status":200, "response":"OK"}]])
@@ -411,11 +414,11 @@ function messages_version_ui()
 
     local node = node_name()
     local epoch = os.time()
-    if query.epoch > epoch then
+    if tonumber(query.epoch) > epoch then
         epoch = query.epoch
     end
 
-    local f = f.open(local_users_status_file, "w")
+    local f = io.open(local_users_status_file, "w")
     if f then
         local found_user = false
         for call_sign, line in pairs(users)
@@ -525,7 +528,7 @@ function upload_file()
     print("\r")
 
     if new_file_size > stats.files_free then
-        os.remove(tmp_upload_dir .. "/file")
+        nixio.fs.remove(tmp_upload_dir .. "/file")
         print([[{"status":500, "response":"Not enough storage, delete some files"}]])
     else
         local fi = io.open(tmp_upload_dir .. "/file", "r")
@@ -533,7 +536,7 @@ function upload_file()
         fo:write(fi:read("*a"))
         fi:close()
         fo:close()
-        os.remove(tmp_upload_dir .. "/file")
+        nixio.fs.remove(tmp_upload_dir .. "/file")
         print([[{"status":200, "response":"OK"}]])
     end
 end
