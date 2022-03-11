@@ -1,4 +1,5 @@
 local aredn_info = require("aredn.info")
+require("posix.fcntl")
 
 version = '1.02'
 
@@ -33,22 +34,29 @@ end
 
 messages_db_file = messages_db_file_orig .. "." .. zone_name()
 
+local lock_fd
 function get_lock()
-    for _ = 1,5
-    do
-        local fh = nixio.open(lock_file, nixio.open_flags("creat", "excl"))
-        if fh then
-            fh:close()
-            return
-        end
-        nixio.nanosleep(0, 500000000)
+    lock_fd = posix.fcntl.open(lock_file, posix.fcntl.O_CREAT)
+    local lock = {
+        l_type = posix.fcntl.F_WRLCK,
+        l_whence = posix.fcntl.SEEK_SET,
+        l_start = 0,
+        l_len = 0
+    }
+    if posix.fcntl.fcntl(lock_fd, posix.fcntl.F_SETLKW, lock) == -1 then
+        print([[{"status":500, "response":"Could not get lock"}]])
+        die("count not get lock")
     end
-    print([[{"status":500, "response":"Could not get lock"}]])
-    die("count not get lock")
 end
 
 function release_lock()
-    nixio.fs.remove(lock_file)
+    local unlock = {
+        l_type = posix.fcntl.F_UNLCK,
+        l_whence = posix.fcntl.SEEK_SET,
+        l_start = 0,
+        l_len = 0
+    }
+    posix.fcntl.fcntl(lock_fd, posix.fcntl.F_SETLK, unlock)
 end
 
 function file_md5(file)
