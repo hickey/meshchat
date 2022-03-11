@@ -1,0 +1,258 @@
+#!/usr/bin/lua
+
+package.path = package.path .. ";/www/cgi-bin/?.lua"
+
+require('luci.sys')
+require("luci.jsonc")
+require("nixio")
+require("meshchatconfig")
+require("meshchatlib")
+
+local sync_status = {}
+local non_mesh_chat_nodes
+
+local node = node_name()
+
+if not nixio.fs.stat(meshchat_path) then
+    nixio.fs.mkdir(meshchat_path)
+    nixio.fs.mkdir(local_files_dir)
+end
+
+if not nixio.fs.stat(messages_db_file) then
+    io.open(messages_db_file, "w"):close()
+    nixio.fs.chmod(messages_db_file, "777")
+end
+
+save_messages_db_version()
+
+nixio.fs.chmod(meshchat_path, "777")
+
+function log_status()
+    local cur_status = {}
+
+    if not nixio.fs.stat(sync_status_file) then
+        io.open(sync_status_file, "w"):close()
+    end
+
+    get_lock()
+
+    for line in io.lines(sync_status_file)
+    do
+        local key, value = line:match("^(.*)\t(.*)$")
+        cur_status[key] = value
+    end
+
+    local f = io.open(sync_status_file, "w")
+    if f then
+        for key, value in pairs(sync_status)
+        do
+            f:write(key .. "\t" .. value .. "\n")
+        end
+        for key, value in pairs(cur_status)
+        do
+            if not sync_status[key] then
+                f:write(key .. "\t" .. value .. "\n")
+            end
+        end
+        f:close()
+    end
+
+    release_lock()
+end
+
+function merge_messages()
+    local rmsg = {}
+    local lmsg = {}
+
+    for line in io.lines(meshchat_path .. "/remote_messages")
+    do
+        local key = line:match("^(%S+)%s")
+        rmsg[key] = line
+    end
+
+    get_lock()
+
+    for line in io.lines(messages_db_file)
+    do
+        local key = line:match("^(%S+)%s")
+        lmsg[key] = line
+    end
+
+    local f = io.open(messages_db_file, "a")
+    if f then
+        for rmsg_id, line in pairs(rmsg)
+        do
+            if not lmsg[rmsg_id] then
+                f:write(line .. "\n")
+            end
+        end
+        f:close()
+    end
+
+    sort_db(true)
+    trim_db(true)
+
+    save_messages_db_version()
+
+    release_lock()
+end
+
+function merge_users()
+    local rusers = {}
+    local lusers = {}
+
+    for line in io.lines(meshchat_path .. "/remote_users")
+    do
+        local key, value = line:match("^(%S+\t%S\t%S)\t(.*)$")
+        if not line:match("error") and key then
+            rusers[key] = value
+        end
+    end
+
+    get_lock()
+
+    for line in io.lines(remote_users_status_file)
+    do
+        local key, value = line:match("^(%S+\t%S\t%S)\t(.*)$")
+        if not line:match("error") and key then
+            lusers[key] = value
+        end
+    end
+
+    local f = io.open(remote_users_status_file, "w")
+    if f then
+        for key, _ in pairs(rusers)
+        do
+            if lusers[key] and lusers[key] > rusers[key] then
+                f:write(key .. "\t" .. lusers[key] .. "\n")
+            else
+                f:write(key .. "\t" .. rusers[key] .. "\n")
+            end
+        end
+        for key, _ in pairs(lusers)
+        do
+            if not rusers[key] then
+                f:write(key .. "\t" .. lusers[key] .. "\n")
+            end
+        end
+        f:close()
+    end
+
+    release_lock()
+end
+
+while true
+do
+    local nodes = node_list()
+    messages_db_file = messages_db_file_orig .. "." .. zone_name()
+
+    sync_status = {}
+
+    for _, node_info in ipairs(nodes)
+    do
+        for _ = 1,1
+        do
+            local remote_node = node_info.node
+            local remote_platform = node_info.platform
+            local remote_port = node_info.port
+
+            local port = ""
+            if remote_port ~= "" then
+                port = ":" .. remote_port
+            end
+
+            if port == "" and remote_platform == "node" then
+                port = ":8080"
+            end
+
+            local version = get_message_db_version()
+
+            -- Poll non mesh chat nodes at a longer interval
+            if non_mesh_chat_nodes[remote_node] and os.time() < non_mesh_chat_nodes[remote_node] then
+                break
+            end
+
+            os.remove(meshchat_path .. "/remote_users")
+
+            -- Get remote users file
+            local f = io.popen("/usr/bin/curl --retry 0 --connect-timeout " .. connect_timeout .. " http://" .. remote_node .. port .. "/cgi-bin/meshchat?action=users_raw&platform=" .. platform .. "&node=" .. node .. " -o " .. meshchat_path .. "/remote_users 2>&1")
+            local output = f:read("*a")
+            f:close()
+
+            -- Check if meshchat is installed
+            if output:match("404 Not Found") then
+                non_mesh_chat_nodes[remote_node] = os.time() + non_meshchat_poll_interval
+                break
+            end
+
+            local md5 = output:match("Content%-MD5:%s(.*)\r\n")
+            if md5 then
+                local f_md5 = file_md5(meshchat_path .. "/remote_users")
+                if md5 == f_md5 then
+                    local cur_size = nixio.fs.stat(meshchat_path .. "/remote_users").size
+                    if cur_size > 0 then
+                        merge_users()
+                    end
+                end
+            end
+
+            -- Get remote files file
+            os.remove(meshchat_path .. "/remote_files")
+            f = io.popen("/usr/bin/curl --retry 0 --connect-timeout " .. connect_timeout .. " http://" .. remote_node .. port .. "/cgi-bin/meshchat?action=local_files_raw -o " .. meshchat_path .. "/remote_files 2>&1")
+            output = f:read("*a")
+            f:close()
+
+            md5 = output:match("Content%-MD5:%s(.*)\r\n")
+            if md5 then
+                local f_md5 = file_md5(meshchat_path .. "/remote_files")
+                nixio.fs.remove(meshchat_path .. "/remote_files." .. remote_node)
+                if md5 == f_md5 then
+                    local cur_size = nixio.fs.stat(meshchat_path .. "/remote_files").size
+                    if cur_size > 0 then
+                        nixio.fs.rename(meshchat_path .. "/remote_files", meshchat_path .. "/remote_files." .. remote_node)
+                    end
+                end
+            end
+
+            -- Get remote messages
+            nixio.fs.remove(meshchat_path .. "/remote_messages")
+
+            f = io.popen("/usr/bin/curl --retry 0 --connect-timeout " .. connect_timeout .. " http://" .. remote_node .. port .. "/cgi-bin/meshchat?action=messages_version -o - 2> /dev/null")
+            local remote_version = f:read("*a")
+            f:close()
+
+            -- Check the version of the remote db against ours. Only download the db if the remote has a different copy
+
+            if remote_version ~= "" and version == remote_version then
+                sync_status[remote_node] = os.time()
+                break
+            end
+
+            f = io.popen("/usr/bin/curl --retry 0 --connect-timeout " .. connect_timeout .. " http://" .. remote_node .. port .. "/cgi-bin/meshchat?action=messages_raw -o " .. meshchat_path ..  "/remote_messages 2>&1")
+            local output = f:read("*a")
+            f:close()
+
+            if nixio.fs.stat(meshchat_path .. "/remote_messages") then
+                local md5 = output:match("Content%-MD5:%s(.*)\r\n")
+                if md5 then
+                    local f_md5 = file_md5(meshchat_path .. "/remote_messages")
+                    if md5 == f_md5 then
+                        local cur_size = nixio.fs.stat(meshchat_path .. "/remote_messages").size
+                        if cur_size > 0 then
+                            sync_status[remote_node] = os.time()
+                            merge_messages()
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    log_status()
+
+    nixio.fs.remove(meshchat_path .. "/remote_messages")
+    nixio.fs.remove(meshchat_path .. "/remote_users")
+    nixio.fs.remove(meshchat_path .. "/remote_files")
+
+    nixio.nixio(poll_interval, 0)
+end

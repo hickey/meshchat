@@ -1,0 +1,10 @@
+Package: meshchat
+Version: 1.1
+Depends: curl
+Provides:
+Source: package/meshchat
+Section: net
+Priority: optional
+Maintainer: Trevor Paskett (K7FPV)
+Architecture: all
+Description: P2P distributed chat for mesh networks

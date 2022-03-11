@@ -1,0 +1,6 @@
+#!/bin/sh
+
+mkdir -p /www/meshchat/db
+/etc/init.d/meshchatsync stop > /dev/null 2> /dev/null
+
+exit 0
