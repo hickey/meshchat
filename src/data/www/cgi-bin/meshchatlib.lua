@@ -34,12 +34,17 @@ end
 messages_db_file = messages_db_file_orig .. "." .. zone_name()
 
 function get_lock()
-    local fh = nixio.open(lock_file, nixio.open_flags("creat", "excl"))
-    if not fh then
-        print([[{"status":500, "response":"Could not get lock"}]])
-        die("count not get lock")
+    for _ = 1,5
+    do
+        local fh = nixio.open(lock_file, nixio.open_flags("creat", "excl"))
+        if fh then
+            fh:close()
+            return
+        end
+        nixio.nanosleep(0, 500000000)
     end
-    fh:close()
+    print([[{"status":500, "response":"Could not get lock"}]])
+    die("count not get lock")
 end
 
 function release_lock()
@@ -84,7 +89,8 @@ function hash()
     return capture("echo " ..  os.time() .. math.random(99999) .. " | md5sum"):sub(1, 8)
 end
 
-function sort_db()
+function sort_and_trim_db()
+    local unused_count = max_messages_db_size
     local messages = {}
     for line in io.lines(messages_db_file)
     do
@@ -94,59 +100,34 @@ function sort_db()
             id = tonumber(id, 16),
             line = line
         }
+        unused_count = unused_count - 1
     end
 
-    table.sort(messages, function(a, b) return a.epoch < b.epoch or a.id < b.id end)
+    table.sort(messages, function(a, b)
+        if a.epoch == b.epoch then
+            return a.id < b.id
+        else
+            return a.epoch < b.epoch
+        end
+    end)
 
     local f = io.open(messages_db_file, "w")
     for _, line in ipairs(messages)
     do
-        f:write(line.line .. "\n")
+        unused_count = unused_count + 1
+        if unused_count > 0 then
+            f:write(line.line .. "\n")
+        end
     end
     f:close()
 end
 
-function trim_db()
-    local line_count = 0
-    for line in io.lines(messages_db_file)
-    do
-       line_count = line_count + 1
-    end
-
-    if line_count > max_messages_db_size then
-        local f = io.open(meshchat_path .. "/shrink_messages", "w")
-        if not f then
-            die("cannot trim db")
-        end
-        local lines_to_trim = line_count - max_messages_db_size
-        local line_count = 1
-        for line in io.lines(messages_db_file)
-        do
-            if line_count > lines_to_trim then
-                print(line .. "\n")
-            end
-            line_count = line_count + 1
-        end
-        f:close()
-    end
-
-    nixio.fs.remove(messages_db_file)
-    local fi = io.open(meshchat_path .. "/shrink_messages", "r")
-    local fo = io.open(messages_db_file, "w")
-    fo:write(fi:read("*a"))
-    fi:close()
-    fo:close()
-    nixio.fs.remove(meshchat_path .. "/shrink_messages")
-    nixio.fs.chmod(messages_db_file, "666")
-end
-
 function file_storage_stats()
     local lines = capture("df -k " .. local_files_dir)
-    local blocks, used, available, perc = lines[2]:match("(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%%")
-    used = used * 1024
-    available = available * 1024
-    local total = user + available
-
+    local blocks, used, available, perc = lines:match("(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%%")
+    used = tonumber(used) * 1024
+    available = tonumber(available) * 1024
+    local total = used + available
 
     get_lock()
 

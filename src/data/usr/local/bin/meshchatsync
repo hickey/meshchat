@@ -30,6 +30,8 @@ save_messages_db_version()
 
 nixio.fs.chmod(meshchat_path, "777")
 
+nixio.fs.remove(lock_file)
+
 function log_status()
     local cur_status = {}
 
@@ -92,8 +94,7 @@ function merge_messages()
         f:close()
     end
 
-    sort_db()
-    trim_db()
+    sort_and_trim_db()
 
     save_messages_db_version()
 

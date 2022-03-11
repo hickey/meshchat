@@ -17,4 +17,3 @@ connect_timeout            = 5
 platform                   = "node"
 debug                      = 0
 extra_nodes                = {}
-domain_extension           = ".local.mesh"

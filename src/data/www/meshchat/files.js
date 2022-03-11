@@ -1,5 +1,6 @@
 var last_update = epoch();
 var free_space = 0;
+var aredn_domain = ".local.mesh"
 
 function monitor_last_update() {
     var secs = epoch() - last_update;
@@ -110,7 +111,7 @@ function load_files() {
                     port = ':8080'
                 }
             }
-            html += '<td><a href="http://' + data.files[i].node + port + '/cgi-bin/meshchat?action=file_download&file=' + encodeURIComponent(data.files[i].file) + '">' + data.files[i].file + '</a></td>';
+            html += '<td><a href="http://' + data.files[i].node + aredn_domain + port + '/cgi-bin/meshchat?action=file_download&file=' + encodeURIComponent(data.files[i].file) + '">' + data.files[i].file + '</a></td>';
             html += '<td>' + numeral(data.files[i].size).format('0.0 b') + '</td>';
             html += '<td class="col_node">' + data.files[i].node + '</td>';
             html += '<td class="col_time">' + format_date(date) + '</td>';

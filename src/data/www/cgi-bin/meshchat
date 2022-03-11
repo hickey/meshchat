@@ -60,7 +60,7 @@ function send_message()
     local message = query.message:gsub("\n", "\\n"):gsub('"', '\\"')
 
     local epoch = os.time()
-    if query.epoch > epoch then
+    if tonumber(query.epoch) > epoch then
         epoch = query.epoch
     end
 
@@ -73,8 +73,7 @@ function send_message()
     f:write(hash() .. "\t" .. epoch .. "\t" .. message .. "\t" .. query.call_sign .. "\t" .. node_name() .. "\t" .. platform .. "\t" .. query.channel .. "\n")
     f:close()
 
-    sort_db()
-    trim_db()
+    sort_and_trim_db()
     save_messages_db_version()
 
     release_lock()
@@ -100,7 +99,7 @@ function messages()
                 epoch = tonumber(epoch),
                 message = message:gsub("\\n", "\n"):gsub('\\"', '"'),
                 call_sign = call_sign,
-                node = node .. domain_extension,
+                node = node,
                 platform = platform,
                 channel = channel
             }
@@ -180,7 +179,7 @@ function messages_raw()
 
     for line in io.lines(messages_db_file)
     do
-        print(line .. "\n")
+        print(line)
     end
 
     release_lock()
@@ -210,7 +209,7 @@ function messages_download()
 
     for line in io.lines(messages_db_file)
     do
-        print(line .. "\n")
+        print(line)
     end
 
     release_lock()
@@ -227,7 +226,7 @@ function users_raw()
 
     for line in io.lines(local_users_status_file)
     do
-        print(line .. "\n")
+        print(line)
     end
 
     release_lock()
@@ -248,7 +247,7 @@ function users()
                 epoch = tonumber(epoch),
                 id = id,
                 call_sign = call_sign,
-                node = node .. domain_extension,
+                node = node,
                 platform = platform
             }
         end
@@ -261,7 +260,7 @@ function users()
                 epoch = tonumber(epoch),
                 id = id,
                 call_sign = call_sign,
-                node = node .. domain_extension,
+                node = node,
                 platform = platform
             }
         end
@@ -298,7 +297,7 @@ function local_files_raw()
 
     for line in io.lines(tmp_file)
     do
-        print(line .. "\n")
+        print(line)
     end
 
     nixio.fs.remove(tmp_file)
@@ -339,7 +338,7 @@ function files()
     get_lock()
 
     local files = {}
-    local node = node_name .. ":" .. os.getenv("SERVER_PORT")
+    local node = node_name() .. ":" .. os.getenv("SERVER_PORT")
     for file in nixio.fs.dir(local_files_dir)
     do
         local stat = nixio.fs.stat(local_files_dir .. "/" .. file)
@@ -347,7 +346,7 @@ function files()
             file = file,
             epoch = s.mtime,
             size = s.size,
-            node = node .. domain_extension,
+            node = node,
             platform = platform
         }
         files[#files]["local"] = 1
@@ -355,7 +354,7 @@ function files()
     for file in nixio.fs.dir(meshchat_path)
     do
         if file:match("^remote_files%.") then
-            for line in io.file(meshchat_path .. "/" .. file)
+            for line in io.lines(meshchat_path .. "/" .. file)
             do
                 local name, node, size, epoch, platform = line:match("^(.*)\t(.*)\t(.*)\t(.*)\t(.*)$")
                 if epoch and #epoch > 0 then
@@ -363,7 +362,7 @@ function files()
                         file = name,
                         epoch = tonumber(epoch),
                         size = size,
-                        node = node .. domain_extension,
+                        node = node,
                         platform = platform
                     }
                     files[#files]["local"] = 0
