@@ -1,0 +1,10 @@
+Package: meshchat-api
+Version: 1.02-lua
+Depends:
+Provides:
+Source: package/meshchat-api
+Section: net
+Priority: optional
+Maintainer: Trevor Paskett (K7FPV)
+Architecture: all
+Description: P2P distributed chat for mesh networks
