@@ -8,10 +8,9 @@ if os.getenv("QUERY_STRING") ~= "" then
     query = luci.http.Request(luci.sys.getenv()):formvalue()
 end
 
+print("Content-type: text/plain\r")
+print("\r")
 if query.action == "meshchat_nodes" then
-    print("Content-type: text/plain\r")
-    print("\r")
-
     local pattern = "http://(%S+):(%d+)/meshchat|tcp|" .. query.zone_name:gsub("-", "%%-") .. "%s"
     for line in io.lines("/var/run/services_olsr")
     do
@@ -21,7 +20,5 @@ if query.action == "meshchat_nodes" then
         end
     end
 else
-    print("Content-type: text/plain\r")
-    print("\r")
     print("error no action")
 end
