@@ -1,6 +1,6 @@
 require("posix.fcntl")
 require("posix.unistd")
-local aredn_info = require("aredn.info")
+require("uci")
 
 version = '1.02'
 
@@ -19,7 +19,7 @@ function capture(cmd)
 end
 
 function node_name()
-    return aredn_info.get_nvram("node")
+    return uci.cursor("/etc/local/uci"):get("hsmmmesh", "settings", "node") or ""
 end
 
 function zone_name()
