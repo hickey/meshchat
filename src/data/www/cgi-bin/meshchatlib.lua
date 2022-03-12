@@ -23,9 +23,9 @@ function node_name()
 end
 
 function zone_name()
-    for line in io.lines("/var/run/services_olsr")
+    for line in io.lines("/etc/config/services")
     do
-        local zone = line:match(":8080/meshchat|tcp|(%S+)%s+# my own")
+        local zone = line:match(":8080/meshchat|tcp|(%S+)")
         if zone then
             return zone
         end
