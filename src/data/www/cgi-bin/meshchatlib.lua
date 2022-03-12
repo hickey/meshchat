@@ -144,7 +144,7 @@ function file_storage_stats()
     local local_files_bytes = 0
     for file in nixio.fs.dir(local_files_dir)
     do
-        local_files_bytes = local_files_bytes + nixio.fs.stat(local_files_dir .. "/" .. dir).size
+        local_files_bytes = local_files_bytes + nixio.fs.stat(local_files_dir .. "/" .. file).size
     end
 
     release_lock()
@@ -157,7 +157,7 @@ function file_storage_stats()
         total = total,
         used = used,
         files = local_files_bytes,
-        file_free = max_file_storage - local_files_bytes,
+        files_free = max_file_storage - local_files_bytes,
         allowed = max_file_storage
     }
 end

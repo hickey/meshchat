@@ -28,6 +28,7 @@ if os.getenv("QUERY_STRING") ~= "" or os.getenv("REQUEST_METHOD") == "POST" then
                 if meta and meta.file then
                     uploadfilename = meta.file
                 end
+                nixio.fs.mkdir(tmp_upload_dir)
                 fp = io.open(tmp_upload_dir .. "/file", "w")
             end
             if chunk then
@@ -306,7 +307,7 @@ function local_files_raw()
 end
 
 function file_download()
-    local file = uri_unescape(query.file)
+    local file = query.file
     local file_path = local_files_dir .. "/" .. file
 
     if file == "" or not nixio.fs.stat(file_path) then
@@ -344,8 +345,8 @@ function files()
         local stat = nixio.fs.stat(local_files_dir .. "/" .. file)
         files[#files + 1] = {
             file = file,
-            epoch = s.mtime,
-            size = s.size,
+            epoch = stat.mtime,
+            size = stat.size,
             node = node,
             platform = platform
         }
@@ -531,7 +532,7 @@ function upload_file()
         print([[{"status":500, "response":"Not enough storage, delete some files"}]])
     else
         local fi = io.open(tmp_upload_dir .. "/file", "r")
-        local fo = io.open(local_files_dir .. "/" .. query.uploadfile, "w")
+        local fo = io.open(local_files_dir .. "/" .. uploadfilename, "w")
         fo:write(fi:read("*a"))
         fi:close()
         fo:close()
