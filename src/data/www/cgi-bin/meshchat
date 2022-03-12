@@ -545,12 +545,13 @@ function meshchat_nodes()
     print("Content-type: text/plain\r")
     print("\r")
 
-    local zone = zone_name()
-    local pattern = "http://(%S+):(%d+)/meshchat|tcp|" .. zone .. "%s"
-    for line in io.open("/var/run/services_olsr")
+    local pattern = "http://(%S+):(%d+)/meshchat|tcp|" .. query.zone_name:gsub("-", "%%-") .. "%s"
+    for line in io.lines("/var/run/services_olsr")
     do
         local node, port = line:match(pattern)
-        print(node .. "\t" .. port)
+        if node and port then
+            print(node .. "\t" .. port)
+        end
     end
 end
 

@@ -25,7 +25,7 @@ end
 function zone_name()
     for line in io.lines("/etc/config/services")
     do
-        local zone = line:match(":8080/meshchat|tcp|(%S+)")
+        local zone = line:match(":8080/meshchat|tcp|(.+)")
         if zone then
             return zone
         end
@@ -171,7 +171,7 @@ function node_list()
     local zone = zone_name()
 
     local nodes = {}
-    local pattern = "http://(%S+):(%d+)/meshchat|tcp|" .. zone .. "%s"
+    local pattern = "http://(%S+):(%d+)/meshchat|tcp|" .. zone:gsub("-", "%%-") .. "%s"
     for line in io.lines("/var/run/services_olsr")
     do
         local node, port = line:match(pattern)
