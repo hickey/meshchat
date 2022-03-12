@@ -50,3 +50,11 @@ function make_id()
 
     return text;
 }
+
+function aredn_domain(host) {
+    if (host.indexOf(".") !== -1) {
+        return host;
+    }
+    host = host.split(":")
+    return host[0] + ".local.mesh" + (host[1] ? ":" + host[1] : "");
+}

@@ -13,7 +13,6 @@ var alert = new Audio('alert.mp3');
 var message_db_version = 0;
 var pending_message_db_version = 0;
 var search_filter = '';
-var aredn_domain = ".local.mesh"
 
 $(function() {
     meshchat_init();
@@ -284,9 +283,9 @@ function process_messages() {
         row += '<td>' + messages[i].call_sign + '</td>';
         row += '<td class="col_channel">' + messages[i].channel + '</td>';
         if (messages[i].platform == 'node') {
-            row += '<td class="col_node"><a href="http://' + messages[i].node + aredn_domain + ':8080" target="_blank">' + messages[i].node + '</a></td>';
+            row += '<td class="col_node"><a href="http://' + aredn_domain(messages[i].node) + ':8080" target="_blank">' + messages[i].node + '</a></td>';
         } else {
-            row += '<td class="col_node"><a href="http://' + messages[i].node + '" target="_blank">' + messages[i].node + '</a></td>';
+            row += '<td class="col_node"><a href="http://' + aredn_domain(messages[i].node) + '" target="_blank">' + messages[i].node + '</a></td>';
         }
         row += '</tr>';
 
@@ -375,9 +374,9 @@ function load_users() {
                     html += '<td><a href="' + data[i].id + '" onclick="start_video(\'' + data[i].id + '\');return false;">' + data[i].call_sign + '</td>';
                 }
                 if (data[i].platform == 'node') {
-                    html += '<td><a href="http://' + data[i].node + aredn_domain + ':8080" target="_blank">' + data[i].node + '</a></td>';
+                    html += '<td><a href="http://' + aredn_domain(data[i].node) + ':8080" target="_blank">' + data[i].node + '</a></td>';
                 } else {
-                    html += '<td><a href="http://' + data[i].node + '" target="_blank">' + data[i].node + '</a></td>';
+                    html += '<td><a href="http://' + aredn_domain(data[i].node) + '" target="_blank">' + data[i].node + '</a></td>';
                 }
                 html += '<td>' + format_date(date) + '</td>';
                 html += '</tr>';
