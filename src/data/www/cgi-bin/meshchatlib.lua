@@ -65,7 +65,7 @@ function file_md5(file)
     if not nixio.fs.stat(file) then
         return ""
     end
-    local output = capture("md5sum " .. file):match("^(%S+)%s")
+    local output = capture("md5sum " .. file:gsub(" ", "\\ ")):match("^(%S+)%s")
     return output and output or ""
 end
 
@@ -167,6 +167,9 @@ function gethostbyname(hostname)
 end
 
 function node_list()
+    if not nixio.fs.stat("/var/run/services_olsr") then
+        return {}
+    end
     local local_node = node_name()
     local zone = zone_name()
 
