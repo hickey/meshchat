@@ -1,6 +1,6 @@
 #!/bin/bash
 
-rm -rf data.tar.gz control.tar.gz *.ipk *.deb
+rm -rf data.tar.gz control.tar.gz *lua*.ipk *.deb
 find . -name '*~' -delete
 
 ### Build AREDN package
