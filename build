@@ -7,7 +7,7 @@ find . -name '*~' -delete
 export COPYFILE_DISABLE=1
 
 cd src/data
-tar cf ../../data.tar `find . -type f | grep -v DS_Store`
+tar cf ../../data.tar `find . -type f | grep -v DS_Store | grep -v .pl | grep -v .pm`
 cd ../control
 tar cfz ../../control.tar.gz .
 cd ../..
