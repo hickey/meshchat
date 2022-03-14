@@ -143,7 +143,7 @@ function messages()
     end
 
     local users = {}
-    if nixio.io.stat(local_users_status_file) then
+    if nixio.fs.stat(local_users_status_file) then
         for line in io.lines(local_users_status_file)
         do
             local call_sign = line:match("^([^\t]+)\t")
