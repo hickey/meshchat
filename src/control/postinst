@@ -6,16 +6,19 @@ grep "|8080|meshchat" /etc/config.mesh/_setup.services.nat &> /dev/null
 NATPRESENT=$?
 NODEMODE=$(uci -q -c /etc/local/uci/ get hsmmmesh.settings.config)
 RAND=$(awk 'BEGIN{srand();print int(rand()*10000) }')
+RESTART=0
 
 if [ "$DMZPRESENT" != 0 ]; then
   echo "MeshChat-$RAND|1|http|$(uname -n)|8080|meshchat" >> /etc/config.mesh/_setup.services.dmz
+  RESTART=1
 fi
 
 if [ "$NATPRESENT" != 0 ]; then
   echo "MeshChat-$RAND|1|http|$(uname -n)|8080|meshchat" >> /etc/config.mesh/_setup.services.nat
+  RESTART=1
 fi
 
-if [ "$NODEMODE" = "mesh" ]; then
+if [ "$NODEMODE" = "mesh" -a "$RESTART" = "1" ]; then
   echo "Applying service announcement"
   /usr/local/bin/node-setup -a -p mesh &> /dev/null
   /etc/init.d/olsrd restart &> /dev/null
