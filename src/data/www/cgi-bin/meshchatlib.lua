@@ -80,7 +80,7 @@ function get_lock()
         l_start = 0,
         l_len = 0
     }
-    if posix.fcntl.fcntl(lock_fd, posix.fcntl.F_SETLKW, lock) == -1 then
+    if posix.fcntl.fcntl(lock_fd, posix.fcntl.F_SETLKW, lock) ~= 0 then
         print([[{"status":500, "response":"Could not get lock"}]])
         die("count not get lock")
     end
