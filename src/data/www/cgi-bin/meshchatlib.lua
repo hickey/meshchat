@@ -206,7 +206,7 @@ function node_list()
     if not nixio.fs.stat("/var/run/services_olsr") then
         return {}
     end
-    local local_node = node_name()
+    local local_node = node_name():lower()
     local zone = zone_name()
 
     local nodes = {}
@@ -215,18 +215,21 @@ function node_list()
     do
         local node, port = line:match(pattern)
         if node and port then
-            if port == "8080" then
-                nodes[#nodes + 1] = {
-                    platform = "node",
-                    node = node:lower(),
-                    port = port
-                }
-            else
-                nodes[#nodes + 1] = {
-                    platform = "pi",
-                    node = node:lower(),
-                    port = port
-                }
+            node = node:lower()
+            if node ~= local_node then
+                if port == "8080" then
+                    nodes[#nodes + 1] = {
+                        platform = "node",
+                        node = node,
+                        port = port
+                    }
+                else
+                    nodes[#nodes + 1] = {
+                        platform = "pi",
+                        node = node,
+                        port = port
+                    }
+                end
             end
         end
     end

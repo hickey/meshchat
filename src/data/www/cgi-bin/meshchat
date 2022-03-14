@@ -190,13 +190,15 @@ function sync_status()
     get_lock()
 
     local status = {}
-    for line in io.lines(sync_status_file)
-    do
-        local node, epoch = line:match("^(.*)\t(.*)$")
-        status[#status + 1] = {
-            node = node,
-            epoch = tonumber(epoch)
-        }
+    if nixio.fs.stat(sync_status_file) then
+        for line in io.lines(sync_status_file)
+        do
+            local node, epoch = line:match("^(.*)\t(.*)$")
+            status[#status + 1] = {
+                node = node,
+                epoch = tonumber(epoch)
+            }
+        end
     end
 
     release_lock()
