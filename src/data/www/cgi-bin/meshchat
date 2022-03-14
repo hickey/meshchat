@@ -93,7 +93,7 @@ function send_message()
     print("Content-type: application/json\r")
     print("\r")
 
-    local message = query.message:gsub("\n", "\\n"):gsub('"', '\\"')
+    local message = query.message:gsub("\n", "\\n"):gsub('"', '\\"'):gsub("\t", " ")
 
     local epoch = os.time()
     if tonumber(query.epoch) > epoch then
