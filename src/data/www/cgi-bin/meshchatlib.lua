@@ -73,7 +73,7 @@ messages_db_file = messages_db_file_orig .. "." .. zone_name()
 
 local lock_fd
 function get_lock()
-    lock_fd = posix.fcntl.open(lock_file, posix.fcntl.O_CREAT)
+    lock_fd = posix.fcntl.open(lock_file, posix.fcntl.O_CREAT + posix.fcntl.O_RDWR)
     local lock = {
         l_type = posix.fcntl.F_WRLCK,
         l_whence = posix.fcntl.SEEK_SET,
