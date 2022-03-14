@@ -31,6 +31,8 @@ echo "<br>"
 
 echo "Mesh Chat has been setup at http://$(uname -n):8080/meshchat"
 echo "<br>"
-echo "An advertised service has been added for Mesh Chat on the Services configuration page"
+if [ "$RESTART" = "1" ]; then
+  echo "An advertised service has been added for Mesh Chat on the Services configuration page"
+fi
 
 exit 0
