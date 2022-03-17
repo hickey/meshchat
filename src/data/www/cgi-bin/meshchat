@@ -136,7 +136,7 @@ function messages()
     local messages = {}
     for line in io.lines(messages_db_file)
     do
-        local id, epoch, message, call_sign, node, platform, channel = line:match("^(%S+)\t(%S+)\t([^\t]+)\t([^\t]+)\t(%S*)\t(%S+)\t(.*)$")
+        local id, epoch, message, call_sign, node, platform, channel = line:match("^(%S+)\t(%S+)\t(.+)\t([^\t]+)\t(%S*)\t(%S+)\t(%S*)$")
         if epoch and #epoch > 0 then
             messages[#messages + 1] = {
                 id = id,
