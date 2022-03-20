@@ -596,7 +596,7 @@ function meshchat_nodes()
     print("Content-type: text/plain\r")
     print("\r")
 
-    local pattern = "http://(%S+):(%d+)/meshchat|tcp|" .. query.zone_name:gsub("-", "%%-") .. "%s"
+    local pattern = "http://(%S+):(%d+)/meshchat|tcp|" .. str_escape(query.zone_name) .. "%s"
     for line in io.lines("/var/run/services_olsr")
     do
         local node, port = line:match(pattern)

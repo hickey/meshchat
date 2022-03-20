@@ -210,7 +210,7 @@ function node_list()
     local zone = zone_name()
 
     local nodes = {}
-    local pattern = "http://(%S+):(%d+)/meshchat|tcp|" .. zone:gsub("-", "%%-") .. "%s"
+    local pattern = "http://(%S+):(%d+)/meshchat|tcp|" .. str_escape(zone) .. "%s"
     for line in io.lines("/var/run/services_olsr")
     do
         local node, port = line:match(pattern)
@@ -240,4 +240,8 @@ function node_list()
     end
 
     return nodes
+end
+
+function str_escape(str)
+	return str:gsub("%(", "%%("):gsub("%)", "%%)"):gsub("%%", "%%%%"):gsub("%.", "%%."):gsub("%+", "%%+"):gsub("-", "%%-"):gsub("%*", "%%*"):gsub("%[", "%%["):gsub("%?", "%%?"):gsub("%^", "%%^"):gsub("%$", "%%$")         
 end

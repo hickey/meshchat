@@ -46,7 +46,7 @@ end
 print("Content-type: text/plain\r")
 print("\r")
 if query.action == "meshchat_nodes" then
-    local pattern = "http://(%S+):(%d+)/meshchat|tcp|" .. query.zone_name:gsub("-", "%%-") .. "%s"
+    local pattern = "http://(%S+):(%d+)/meshchat|tcp|" .. str_escape(query.zone_name) .. "%s"
     for line in io.lines("/var/run/services_olsr")
     do
         local node, port = line:match(pattern)
@@ -56,4 +56,8 @@ if query.action == "meshchat_nodes" then
     end
 else
     print("error no action")
+end
+
+function str_escape(str)
+	return str:gsub("%(", "%%("):gsub("%)", "%%)"):gsub("%%", "%%%%"):gsub("%.", "%%."):gsub("%+", "%%+"):gsub("-", "%%-"):gsub("%*", "%%*"):gsub("%[", "%%["):gsub("%?", "%%?"):gsub("%^", "%%^"):gsub("%$", "%%$")         
 end
