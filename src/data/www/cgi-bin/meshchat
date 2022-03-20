@@ -423,12 +423,14 @@ function files()
         end
     end
 
+    local stats = file_storage_stats()
+
     release_lock()
 
     table.sort(files, function(a, b) return a.epoch > b.epoch end)
 
     print(luci.jsonc.stringify({
-        stats = file_storage_stats(),
+        stats = stats,
         files = files
     }))
 end
@@ -573,7 +575,12 @@ end
 
 function upload_file()
     local new_file_size = nixio.fs.stat(tmp_upload_dir .. "/file").size
+
+    get_lock()
+
     local stats = file_storage_stats()
+
+    release_lock()
 
     print("Content-type: application/json\r")
     print("\r")

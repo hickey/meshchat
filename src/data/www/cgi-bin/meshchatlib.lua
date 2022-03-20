@@ -72,17 +72,20 @@ end
 messages_db_file = messages_db_file_orig .. "." .. zone_name()
 
 local lock_fd
-function get_lock()
-    lock_fd = posix.fcntl.open(lock_file, posix.fcntl.O_CREAT + posix.fcntl.O_RDWR)
+function get_lock(wait)
+    if not lock_fd then
+        lock_fd = posix.fcntl.open(lock_file, posix.fcntl.O_WRONLY)
+    end
     local lock = {
-        l_type = posix.fcntl.F_WRLCK,
+        l_type = wait and posix.fcntl.F_WRLCK or posix.fcntl.F_SETLK,
         l_whence = posix.fcntl.SEEK_SET,
         l_start = 0,
         l_len = 0
     }
-    if posix.fcntl.fcntl(lock_fd, posix.fcntl.F_SETLKW, lock) ~= 0 then
-        print([[{"status":500, "response":"Could not get lock"}]])
-        die("count not get lock")
+    local code = posix.fcntl.fcntl(lock_fd, posix.fcntl.F_SETLKW, lock)
+    if code and code ~= 0 then
+        print([[{"status":500,"response":"Could not get lock","code":]] .. code .. "}")
+        die("could not get lock")
     end
 end
 
@@ -94,7 +97,6 @@ function release_lock()
         l_len = 0
     }
     posix.fcntl.fcntl(lock_fd, posix.fcntl.F_SETLK, unlock)
-    posix.unistd.close(lock_fd)
 end
 
 function file_md5(file)
@@ -175,15 +177,11 @@ function file_storage_stats()
     available = tonumber(available) * 1024
     local total = used + available
 
-    get_lock()
-
     local local_files_bytes = 0
     for file in nixio.fs.dir(local_files_dir)
     do
         local_files_bytes = local_files_bytes + nixio.fs.stat(local_files_dir .. "/" .. file).size
     end
-
-    release_lock()
 
     if max_file_storage - local_files_bytes < 0 then
         local_files_bytes = max_file_storage
