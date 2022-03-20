@@ -72,12 +72,12 @@ end
 messages_db_file = messages_db_file_orig .. "." .. zone_name()
 
 local lock_fd
-function get_lock(wait)
+function get_lock()
     if not lock_fd then
         lock_fd = posix.fcntl.open(lock_file, posix.fcntl.O_WRONLY)
     end
     local lock = {
-        l_type = wait and posix.fcntl.F_WRLCK or posix.fcntl.F_SETLK,
+        l_type = posix.fcntl.F_WRLCK,
         l_whence = posix.fcntl.SEEK_SET,
         l_start = 0,
         l_len = 0

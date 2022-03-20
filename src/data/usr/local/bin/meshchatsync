@@ -74,7 +74,7 @@ function log_status()
         io.open(sync_status_file, "w"):close()
     end
 
-    get_lock(true)
+    get_lock()
 
     for line in io.lines(sync_status_file)
     do
@@ -110,7 +110,7 @@ function merge_messages()
         rmsg[key] = line
     end
 
-    get_lock(true)
+    get_lock()
 
     for line in io.lines(messages_db_file)
     do
@@ -148,7 +148,7 @@ function merge_users()
         end
     end
 
-    get_lock(true)
+    get_lock()
 
     for line in io.lines(remote_users_status_file)
     do
