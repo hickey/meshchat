@@ -3,7 +3,7 @@
 
 	Part of AREDN -- Used for creating Amateur Radio Emergency Data Networks
 	Copyright (C) 2022 Tim Wilkinson
-    Base on code (C) Trevor Paskett (see https://github.com/tpaskett)
+	Base on code (C) Trevor Paskett (see https://github.com/tpaskett)
 	See Contributors file for additional contributors
 
 	This program is free software: you can redistribute it and/or modify
@@ -38,6 +38,10 @@
 require('luci.sys')
 require('luci.http')
 
+function str_escape(str)
+    return str:gsub("%(", "%%("):gsub("%)", "%%)"):gsub("%%", "%%%%"):gsub("%.", "%%."):gsub("%+", "%%+"):gsub("-", "%%-"):gsub("%*", "%%*"):gsub("%[", "%%["):gsub("%?", "%%?"):gsub("%^", "%%^"):gsub("%$", "%%$")         
+end
+
 local query = {}
 if os.getenv("QUERY_STRING") ~= "" then
     query = luci.http.Request(luci.sys.getenv()):formvalue()
@@ -56,8 +60,4 @@ if query.action == "meshchat_nodes" then
     end
 else
     print("error no action")
-end
-
-function str_escape(str)
-	return str:gsub("%(", "%%("):gsub("%)", "%%)"):gsub("%%", "%%%%"):gsub("%.", "%%."):gsub("%+", "%%+"):gsub("-", "%%-"):gsub("%*", "%%*"):gsub("%[", "%%["):gsub("%?", "%%?"):gsub("%^", "%%^"):gsub("%$", "%%$")         
 end
