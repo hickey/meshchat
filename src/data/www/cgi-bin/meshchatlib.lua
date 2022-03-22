@@ -215,19 +215,11 @@ function node_list()
         if node and port then
             node = node:lower()
             if node ~= local_node then
-                if port == "8080" then
-                    nodes[#nodes + 1] = {
-                        platform = "node",
-                        node = node,
-                        port = port
-                    }
-                else
-                    nodes[#nodes + 1] = {
-                        platform = "pi",
-                        node = node,
-                        port = port
-                    }
-                end
+                nodes[#nodes + 1] = {
+                    platform = (port == "8080" and "node" or "pi"),
+                    node = node,
+                    port = port
+                }
             end
         end
     end

@@ -523,7 +523,7 @@ function hosts()
     do
         local f = io.popen("/usr/bin/curl --retry 0 --connect-timeout " .. connect_timeout .. " http://" .. remote_node .. ":8080/cgi-bin/meshchat?action=hosts_raw 2> /dev/null")
         if f then
-            for line in io.lines(f)
+            for line in f:lines()
             do
                 if line ~= "" and not line:match("error") then
                     local ip, hostname = line:match("^(.+)\t(.+)$")
