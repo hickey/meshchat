@@ -38,8 +38,6 @@ require("posix.fcntl")
 require("posix.unistd")
 require("uci")
 
-version = '1.02'
-
 function die(msg)
     os.exit(-1)
 end

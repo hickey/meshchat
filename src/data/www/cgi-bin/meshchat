@@ -86,7 +86,7 @@ end
 function config()
     print("Content-type: application/json\r")
     print("\r")
-    print(string.format([[{"version":"%s","node":"%s","zone":"%s"}]], version, node_name(), zone_name()))
+    print(string.format([[{"version":"%s","node":"%s","zone":"%s"}]], protocol_version, node_name(), zone_name()))
 end
 
 function send_message()

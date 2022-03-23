@@ -1,6 +1,6 @@
 #!/bin/bash
 
-rm -rf *lua*.ipk *.deb
+rm -rf *.ipk *.deb
 find . -name '*~' -delete
 
 ### Build AREDN package
@@ -14,7 +14,7 @@ cd ../control
 tar cfz ../../control.tar.gz .
 cd ../..
 gzip data.tar
-COPYFILE_DISABLE=1 tar cfz meshchat_1.02-lua_all.ipk control.tar.gz data.tar.gz debian-binary
+COPYFILE_DISABLE=1 tar cfz meshchat_2.0_all.ipk control.tar.gz data.tar.gz debian-binary
 
 # API-only
 rm -rf data.tar.gz control.tar.gz
@@ -24,6 +24,6 @@ cd ../control
 tar cfz ../../control.tar.gz .
 cd ../..
 gzip data.tar
-COPYFILE_DISABLE=1 tar cfz meshchat-api_1.02-lua_all.ipk control.tar.gz data.tar.gz debian-binary
+COPYFILE_DISABLE=1 tar cfz meshchat-api_2.0_all.ipk control.tar.gz data.tar.gz debian-binary
 
 rm -rf data.tar.gz control.tar.gz *.deb

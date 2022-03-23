@@ -53,3 +53,4 @@ connect_timeout            = 5
 platform                   = "node"
 debug                      = 0
 extra_nodes                = {}
+protocol_version 		   = "1.02"

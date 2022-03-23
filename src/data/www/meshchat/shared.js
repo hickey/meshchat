@@ -6,8 +6,8 @@ $(function() {
     });
 
     $.getJSON('/cgi-bin/meshchat?action=config', function(data) {
-        document.title = 'Mesh Chat v' + data.version + "-lua";
-        $('#version').html('<strong>Mesh Chat v' + data.version + '-lua</strong>');
+        document.title = 'Mesh Chat v' + data.version;
+        $('#version').html('<strong>Mesh Chat v' + data.version + '</strong>');
         $('#node').html('<strong>Node:</strong> ' + data.node);
         $('#zone').html('<strong>Zone:</strong> ' + data.zone);
         $('#callsign').html('<strong>Call Sign:</strong> ' + Cookies.get('meshchat_call_sign'));

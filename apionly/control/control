@@ -1,5 +1,5 @@
 Package: meshchat-api
-Version: 1.02-lua
+Version: 2.0
 Depends:
 Provides:
 Source: package/meshchat-api
