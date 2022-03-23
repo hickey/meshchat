@@ -54,3 +54,4 @@ platform                   = "node"
 debug                      = 0
 extra_nodes                = {}
 protocol_version 		   = "1.02"
+app_version				   = "2.0"
