@@ -104,6 +104,7 @@ function send_message()
 
     local f = io.open(messages_db_file, "a")
     if not f then
+        release_lock()
         die("Cannot send message")
     end
     f:write(hash() .. "\t" .. epoch .. "\t" .. message .. "\t" .. query.call_sign .. "\t" .. node_name() .. "\t" .. platform .. "\t" .. query.channel .. "\n")
@@ -224,17 +225,22 @@ function messages_raw()
     get_lock()
 
     local md5 = file_md5(messages_db_file)
+    local lines = {}
+    for line in io.lines(messages_db_file)
+    do
+        lines[#lines + 1] = line
+    end
+
+    release_lock()
 
     print("Content-MD5: " .. md5 .. "\r")
     print("Content-type: text/plain\r")
     print("\r")
 
-    for line in io.lines(messages_db_file)
+    for _, line in ipairs(lines)
     do
         print(line)
     end
-
-    release_lock()
 end
 
 function messages_md5()
@@ -242,46 +248,56 @@ function messages_md5()
 
     local md5 = file_md5(messages_db_file)
 
+    release_lock()
+
     print("Content-type: text/plain\r")
     print("\r")
     print(md5)
-
-    release_lock()
 end
 
 function messages_download()
     get_lock()
 
     local md5 = file_md5(messages_db_file)
+    local lines = {}
+    for line in io.lines(messages_db_file)
+    do
+        lines[#lines + 1] = line
+    end
+
+    release_lock()
 
     print("Content-MD5: " .. md5 .. "\r")
     print("Content-Disposition: attachment; filename=messages.txt;\r")
     print("Content-type: text/plain\r")
     print("\r")
 
-    for line in io.lines(messages_db_file)
+    for _, line in ipairs(lines)
     do
         print(line)
     end
-
-    release_lock()
 end
 
 function users_raw()
     get_lock()
 
     local md5 = file_md5(local_users_status_file)
+    local lines = {}
+    for line in io.lines(local_users_status_file)
+    do
+        lines[#lines + 1] = line
+    end
+
+    release_lock()
 
     print("Content-MD5: " .. md5 .. "\r")
     print("Content-type: text/plain\r")
     print("\r")
 
-    for line in io.lines(local_users_status_file)
+    for _, line in ipairs(lines)
     do
         print(line)
     end
-
-    release_lock()
 end
 
 function users()
@@ -328,7 +344,7 @@ end
 function local_files_raw()
     get_lock()
 
-    local tmp_file = meshchat_path .. "/meshchat_files_local"
+    local tmp_file = meshchat_path .. "/meshchat_files_local." .. nixio.getpid()
     local f = io.open(tmp_file, "w")
     if not f then
         die("Cannot list local files")
@@ -343,6 +359,8 @@ function local_files_raw()
 
     local md5 = file_md5(tmp_file)
 
+    release_lock()
+
     print("Content-MD5: " .. md5 .. "\r")
     print("Content-type: text/plain\r")
     print("\r")
@@ -353,8 +371,6 @@ function local_files_raw()
     end
 
     nixio.fs.remove(tmp_file)
-
-    release_lock()
 end
 
 function file_download()
@@ -369,18 +385,19 @@ function file_download()
     get_lock()
 
     local md5 = file_md5(file_path)
+    local f = io.open(file_path, "rb")
+
+    release_lock()
+
     print("Content-MD5: " .. md5 .. "\r")
     print("Content-Disposition: attachment; filename=\"" .. file .. "\";\r")
     print("Content-type: application/octet-stream\r")
     print("\r")
 
-    local f = io.open(file_path, "rb")
     if f then
         io.write(f:read("*a"))
         f:close()
     end
-
-    release_lock()
 end
 
 function files()
