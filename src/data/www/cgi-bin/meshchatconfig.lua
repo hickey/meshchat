@@ -50,6 +50,7 @@ tmp_upload_dir             = "/tmp/web/upload"
 poll_interval              = 10
 non_meshchat_poll_interval = 600
 connect_timeout            = 5
+total_timeout              = 20
 platform                   = "node"
 debug                      = 0
 extra_nodes                = {}
