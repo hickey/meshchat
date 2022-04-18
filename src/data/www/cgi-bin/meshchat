@@ -538,7 +538,7 @@ function hosts()
 
     for _, remote_node in ipairs(node_list())
     do
-        local f = io.popen("/usr/bin/curl --retry 0 --connect-timeout " .. connect_timeout .. " --speed-time " .. speed_time .. " --speed-limit " speed_limit .. " http://" .. remote_node .. ":8080/cgi-bin/meshchat?action=hosts_raw 2> /dev/null")
+        local f = io.popen("/usr/bin/curl --retry 0 --connect-timeout " .. connect_timeout .. " --speed-time " .. speed_time .. " --speed-limit " .. speed_limit .. " http://" .. remote_node .. ":8080/cgi-bin/meshchat?action=hosts_raw 2> /dev/null")
         if f then
             for line in f:lines()
             do

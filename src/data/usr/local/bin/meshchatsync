@@ -213,7 +213,7 @@ do
             nixio.fs.remove(meshchat_path .. "/remote_users")
 
             -- Get remote users file
-            local f = io.popen("/usr/bin/curl --retry 0 --connect-timeout " .. connect_timeout .. " --speed-time " .. speed_time .. " --speed-limit " speed_limit .. " -sD - \"http://" .. remote_node .. port .. "/cgi-bin/meshchat?action=users_raw&platform=" .. platform .. "&node=" .. node .. "\" -o " .. meshchat_path .. "/remote_users 2>&1")
+            local f = io.popen("/usr/bin/curl --retry 0 --connect-timeout " .. connect_timeout .. " --speed-time " .. speed_time .. " --speed-limit " .. speed_limit .. " -sD - \"http://" .. remote_node .. port .. "/cgi-bin/meshchat?action=users_raw&platform=" .. platform .. "&node=" .. node .. "\" -o " .. meshchat_path .. "/remote_users 2>&1")
             local output = f:read("*a")
             f:close()
 
@@ -236,7 +236,7 @@ do
 
             -- Get remote files file
             nixio.fs.remove(meshchat_path .. "/remote_files")
-            f = io.popen("/usr/bin/curl --retry 0 --connect-timeout " .. connect_timeout .. " --speed-time " .. speed_time .. " --speed-limit " speed_limit .. " -sD - \"http://" .. remote_node .. port .. "/cgi-bin/meshchat?action=local_files_raw\" -o " .. meshchat_path .. "/remote_files 2>&1")
+            f = io.popen("/usr/bin/curl --retry 0 --connect-timeout " .. connect_timeout .. " --speed-time " .. speed_time .. " --speed-limit " .. speed_limit .. " -sD - \"http://" .. remote_node .. port .. "/cgi-bin/meshchat?action=local_files_raw\" -o " .. meshchat_path .. "/remote_files 2>&1")
             output = f:read("*a")
             f:close()
 
@@ -255,7 +255,7 @@ do
             -- Get remote messages
             nixio.fs.remove(meshchat_path .. "/remote_messages")
 
-            f = io.popen("/usr/bin/curl --retry 0 --connect-timeout " .. connect_timeout .. " --speed-time " .. speed_time .. " --speed-limit " speed_limit .. " \"http://" .. remote_node .. port .. "/cgi-bin/meshchat?action=messages_version\" -o - 2> /dev/null")
+            f = io.popen("/usr/bin/curl --retry 0 --connect-timeout " .. connect_timeout .. " --speed-time " .. speed_time .. " --speed-limit " .. speed_limit .. " \"http://" .. remote_node .. port .. "/cgi-bin/meshchat?action=messages_version\" -o - 2> /dev/null")
             local remote_version = f:read("*a")
             f:close()
 
@@ -266,7 +266,7 @@ do
                 break
             end
 
-            f = io.popen("/usr/bin/curl --retry 0 --connect-timeout " .. connect_timeout .. " --speed-time " .. speed_time .. " --speed-limit " speed_limit .. " -sD - \"http://" .. remote_node .. port .. "/cgi-bin/meshchat?action=messages_raw\" -o " .. meshchat_path ..  "/remote_messages 2>&1")
+            f = io.popen("/usr/bin/curl --retry 0 --connect-timeout " .. connect_timeout .. " --speed-time " .. speed_time .. " --speed-limit " .. speed_limit .. " -sD - \"http://" .. remote_node .. port .. "/cgi-bin/meshchat?action=messages_raw\" -o " .. meshchat_path ..  "/remote_messages 2>&1")
             local output = f:read("*a")
             f:close()
 
