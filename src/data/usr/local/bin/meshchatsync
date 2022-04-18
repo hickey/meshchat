@@ -142,7 +142,7 @@ function merge_users()
 
     for line in io.lines(meshchat_path .. "/remote_users")
     do
-        local key, value = line:match("^(%S+\t%S\t%S)\t(.*)$")
+        local key, value = line:match("^(%S+\t%S+\t%S+)\t(.*)$")
         if not line:match("error") and key then
             rusers[key] = value
         end
@@ -152,7 +152,7 @@ function merge_users()
 
     for line in io.lines(remote_users_status_file)
     do
-        local key, value = line:match("^(%S+\t%S\t%S)\t(.*)$")
+        local key, value = line:match("^(%S+\t%S+\t%S+)\t(.*)$")
         if not line:match("error") and key then
             lusers[key] = value
         end
