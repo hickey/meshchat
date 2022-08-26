@@ -476,7 +476,7 @@ function messages_version_ui()
     local users = {}
     for line in io.lines(local_users_status_file)
     do
-        local call_sign = line:match("^([^\t])\t")
+        local call_sign = line:match("^([^\t]+)\t")
         if call_sign then
             users[call_sign] = line
         end
