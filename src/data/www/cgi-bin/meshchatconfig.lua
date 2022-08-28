@@ -2,7 +2,7 @@
 
 	Part of AREDN -- Used for creating Amateur Radio Emergency Data Networks
 	Copyright (C) 2022 Tim Wilkinson
-    Base on code (C) Trevor Paskett (see https://github.com/tpaskett)
+	Base on code (C) Trevor Paskett (see https://github.com/tpaskett)
 	See Contributors file for additional contributors
 
 	This program is free software: you can redistribute it and/or modify
@@ -55,5 +55,5 @@ speed_limit                = 1000
 platform                   = "node"
 debug                      = 0
 extra_nodes                = {}
-protocol_version 		   = "1.02"
-app_version				   = "2.0"
+protocol_version           = "1.02"
+app_version                = "2.1"
