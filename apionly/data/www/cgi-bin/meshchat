@@ -35,7 +35,7 @@
 
 --]]
 
-require('luci.sys')
+require('nixio')
 require('luci.http')
 
 function str_escape(str)
@@ -44,7 +44,7 @@ end
 
 local query = {}
 if os.getenv("QUERY_STRING") ~= "" then
-    query = luci.http.Request(luci.sys.getenv()):formvalue()
+    query = luci.http.Request(nixio.getenv()):formvalue()
 end
 
 print("Content-type: text/plain\r")

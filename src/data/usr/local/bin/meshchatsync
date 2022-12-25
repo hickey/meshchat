@@ -37,7 +37,6 @@
 
 package.path = package.path .. ";/www/cgi-bin/?.lua"
 
-require('luci.sys')
 require("luci.jsonc")
 require("nixio")
 require("meshchatconfig")

@@ -38,7 +38,6 @@
 package.path = package.path .. ";/www/cgi-bin/?.lua"
 
 require('luci.http')
-require('luci.sys')
 require("luci.jsonc")
 require("nixio")
 require("meshchatconfig")
@@ -47,7 +46,7 @@ require("meshchatlib")
 local query = {}
 local uploadfilename
 if os.getenv("QUERY_STRING") ~= "" or os.getenv("REQUEST_METHOD") == "POST" then
-    local request = luci.http.Request(luci.sys.getenv(),
+    local request = luci.http.Request(nixio.getenv(),
         function()
             local v = io.read(1024)
             if not v then
