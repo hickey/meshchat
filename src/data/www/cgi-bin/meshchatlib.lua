@@ -34,8 +34,7 @@
 
 --]]
 
-require("posix.fcntl")
-require("posix.unistd")
+require("nixio")
 require("uci")
 
 function die(msg)
@@ -72,29 +71,13 @@ messages_db_file = messages_db_file_orig .. "." .. zone_name()
 local lock_fd
 function get_lock()
     if not lock_fd then
-        lock_fd = posix.fcntl.open(lock_file, posix.fcntl.O_WRONLY)
+        lock_fd = nixio.open(lock_file, "w", "666")
     end
-    local lock = {
-        l_type = posix.fcntl.F_WRLCK,
-        l_whence = posix.fcntl.SEEK_SET,
-        l_start = 0,
-        l_len = 0
-    }
-    local code = posix.fcntl.fcntl(lock_fd, posix.fcntl.F_SETLKW, lock)
-    if code and code ~= 0 then
-        print([[{"status":500,"response":"Could not get lock","code":]] .. code .. "}")
-        die("could not get lock")
-    end
+    lock_fd:lock("lock")
 end
 
 function release_lock()
-    local unlock = {
-        l_type = posix.fcntl.F_UNLCK,
-        l_whence = posix.fcntl.SEEK_SET,
-        l_start = 0,
-        l_len = 0
-    }
-    posix.fcntl.fcntl(lock_fd, posix.fcntl.F_SETLK, unlock)
+    lock_fd:lock("ulock")
 end
 
 function file_md5(file)
