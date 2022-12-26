@@ -91,7 +91,8 @@ end
 function get_messages_db_version()
     for line in io.lines(messages_version_file)
     do
-        return line:gsub("\n$", "")
+        line = line:gsub("\n$", "")
+        return line
     end
 end
 
