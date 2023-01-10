@@ -3,7 +3,7 @@
 
 	Part of AREDN -- Used for creating Amateur Radio Emergency Data Networks
 	Copyright (C) 2022 Tim Wilkinson
-    Based on code (C) Trevor Paskett (see https://github.com/tpaskett)
+        Based on code (C) Trevor Paskett (see https://github.com/tpaskett)
 	See Contributors file for additional contributors
 
 	This program is free software: you can redistribute it and/or modify
@@ -52,7 +52,7 @@ end
 
 if not nixio.fs.stat(messages_db_file) then
     io.open(messages_db_file, "w"):close()
-    nixio.fs.chmod(messages_db_file, "777")
+    nixio.fs.chmod(messages_db_file, "666")
 end
 
 io.open(local_users_status_file, "a"):close()
@@ -60,7 +60,7 @@ io.open(remote_users_status_file, "a"):close()
 
 save_messages_db_version()
 
-nixio.fs.chmod(meshchat_path, "777")
+nixio.fs.chmod(meshchat_path, "666")
 
 io.open(lock_file, "a"):close()
 
