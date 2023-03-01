@@ -120,16 +120,21 @@ function hash()
 end
 
 function sort_and_trim_db()
+    local valid_time = os.time() + valid_future_message_time
     local unused_count = max_messages_db_size
     local messages = {}
     for line in io.lines(messages_db_file)
     do
         local id, epoch = line:match("^(%S+)\t(%S+)\t")
-        messages[#messages + 1] = {
-            epoch = tonumber(epoch),
-            id = tonumber(id, 16),
-            line = line
-        }
+	-- ignore messages that are too far in the future (assume they're errors)
+        epoch = tonumber(epoch)
+	if epoch < valid_time then
+            messages[#messages + 1] = {
+                epoch = epoch,
+                id = tonumber(id, 16),
+                line = line
+            }
+        end
         unused_count = unused_count - 1
     end
 
