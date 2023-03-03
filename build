@@ -24,6 +24,7 @@ rm -rf data.tar.gz control.tar.gz
 cd apionly/data
 tar cf ../../data.tar `find . -type f | grep -v DS_Store | grep -v .pl | grep -v .pm`
 cd ../control
+sed -i "s/^Version: .*$/Version: ${VERSION}/" control
 tar cfz ../../control.tar.gz .
 cd ../..
 gzip data.tar
