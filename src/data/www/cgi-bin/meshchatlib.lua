@@ -2,7 +2,7 @@
 
 	Part of AREDN -- Used for creating Amateur Radio Emergency Data Networks
 	Copyright (C) 2022 Tim Wilkinson
-    Base on code (C) Trevor Paskett (see https://github.com/tpaskett)
+	Base on code (C) Trevor Paskett (see https://github.com/tpaskett)
 	See Contributors file for additional contributors
 
 	This program is free software: you can redistribute it and/or modify
