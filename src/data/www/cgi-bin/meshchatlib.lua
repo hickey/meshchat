@@ -125,10 +125,10 @@ function sort_and_trim_db()
     local messages = {}
     for line in io.lines(messages_db_file)
     do
-        local id, epoch = line:match("^(%S+)\t(%S+)\t")
+        local id, epoch = line:match("^(%x+)\t(%S+)\t")
 	-- ignore messages that are too far in the future (assume they're errors)
         epoch = tonumber(epoch)
-	if epoch < valid_time then
+	if epoch and epoch < valid_time then
             messages[#messages + 1] = {
                 epoch = epoch,
                 id = tonumber(id, 16),
