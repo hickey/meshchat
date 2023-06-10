@@ -78,6 +78,7 @@ jobs:
         with:
           fetch-depth: 0
           fetch-tags: true
-      - uses: ./.github/workflows/publish-docs.yaml
+      - uses:
+          ./.github/workflows/publish-docs.yaml
         with:
           build_version: ${{ needs.create-release.outputs.build_version }}

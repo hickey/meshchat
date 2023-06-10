@@ -1,0 +1,892 @@
+#!/usr/bin/lua
+--[[
+
+	Part of AREDN -- Used for creating Amateur Radio Emergency Data Networks
+	Copyright (C) 2022 Tim Wilkinson
+    Base on code (C) Trevor Paskett (see https://github.com/tpaskett)
+	See Contributors file for additional contributors
+
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation version 3 of the License.
+
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+	Additional Terms:
+
+	Additional use restrictions exist on the AREDN(TM) trademark and logo.
+		See AREDNLicense.txt for more info.
+
+	Attributions to the AREDN Project must be retained in the source code.
+	If importing this code into a new or existing project attribution
+	to the AREDN project must be added to the source code.
+
+	You must not misrepresent the origin of the material contained within.
+
+	Modified versions must be modified to attribute to the original source
+	and be marked in reasonable ways as differentiate it from the original
+	version
+
+--]]
+
+package.path = package.path .. ";/www/cgi-bin/?.lua"
+
+require('luci.http')
+local json = require("luci.jsonc")
+require("nixio")
+require("meshchatconfig")
+require("meshchatlib")
+
+---
+-- @module meshchat
+
+local query = {}
+local uploadfilename
+if os.getenv("QUERY_STRING") ~= "" or os.getenv("REQUEST_METHOD") == "POST" then
+    local request = luci.http.Request(nixio.getenv(),
+    function()
+        local v = io.read(1024)
+        if not v then
+            io.close()
+        end
+            return v
+        end
+    )
+    local fp
+    request:setfilehandler(
+        function(meta, chunk, eof)
+            if not fp then
+                if meta and meta.file then
+                    uploadfilename = meta.file
+                end
+                nixio.fs.mkdir(tmp_upload_dir)
+                fp = io.open(tmp_upload_dir .. "/file", "w")
+            end
+            if chunk then
+                fp:write(chunk)
+            end
+            if eof then
+                fp:close()
+            end
+        end
+    )
+    query = request:formvalue()
+end
+
+--- Return an error page to a browser.
+-- @tparam string msg Error message to be displayed
+--
+function error(msg)
+    print("Content-type: text/plain\r")
+    print("\r")
+    print(msg)
+end
+
+--- @section API
+
+--- Returns a JSON document with basic node configuration.
+--
+-- ## API Parameters
+-- | Parameter | Required | Description                              |
+-- |-----------|----------|------------------------------------------|
+-- | action    |    yes   | Must be set to `config`                  |
+--
+-- ## API Response
+--
+-- @example
+--   {
+--      "version": "meshchat_version",
+--      "node": "node_name",
+--      "zone": "meshchat_zone_name"
+--   }
+--
+function config()
+    print("Content-type: application/json\r")
+    print("\r")
+
+    local settings = {
+        version = app_version,
+        protocol_verison = protocol_version,
+        node = node_name(),
+        zone = zone_name(),
+        default_channel = default_channel,
+        debug = debug,
+    }
+
+    print(json.stringify(settings))
+end
+
+--- Send a message to the MeshChat instance.
+--
+-- ## API Parameters
+-- | Parameter | Required | Description                              |
+-- |-----------|----------|------------------------------------------|
+-- | action    |    yes   | Must be set to `send_message`            |
+-- | message   |    yes   | Message body                             |
+-- | call_sign |    yes   | Call sign of the sender                  |
+-- | channel   |    no    | Channel name to post message             |
+-- | epoch     |    no    | Timestamp specified as unixtime          |
+--
+-- @note message
+--   Needs to have newslines and double quotes escaped.
+--
+-- @note channel
+--   If not specified or set to empty string will post message to
+--   `Everything` channel
+--
+-- @note epoch
+--   If not specified, the current time on the MeshChat server will
+--   be used.
+--
+-- ## API Response
+--
+-- On a successful entry of the message into the database a success JSON
+-- document will be returned.
+--
+-- @example
+--   {
+--     "status": 200,
+--     "response": "OK"
+--   }
+--
+function send_message()
+    print("Content-type: application/json\r")
+    print("\r")
+
+    local message = query.message:gsub("\n", "\\n"):gsub('"', '\\"'):gsub("\t", " ")
+    local id = query.id or hash();
+    local epoch = os.time()
+    if tonumber(query.epoch) > epoch then
+        epoch = query.epoch
+    end
+
+    get_lock()
+
+    local f = io.open(messages_db_file, "a")
+    if not f then
+        release_lock()
+        -- TODO return a proper error code on failure
+        die("Cannot send message")
+    end
+    f:write(id .. "\t" .. epoch .. "\t" .. message .. "\t" .. query.call_sign .. "\t" .. node_name() .. "\t" .. platform .. "\t" .. query.channel .. "\n")
+    f:close()
+
+    sort_and_trim_db()
+    save_messages_db_version()
+
+    release_lock()
+
+    print([[{"status":200, "response":"OK"}]])
+end
+
+--- Return a list of message stored on the MeshChat instance.
+--
+-- ## API Parameters
+-- | Parameter | Required | Description                              |
+-- |-----------|----------|------------------------------------------|
+-- | action    |    yes   | Must be set to `messages`                |
+-- | call_sign |    no    | Call sign of the requester               |
+-- | epoch     |    no    | Timestamp specified as unixtime          |
+-- | id        |    no    | Generated MeshChat ID                    |
+--
+-- ## API Response
+--
+-- @example
+--   {
+--     "id": "id_str",
+--     "epoch": epoch_time,
+--     "message": "message_text",
+--     "call_sign": "sending_call_sign",
+--     "node": "originating_node",
+--     "platform": "originating_node_platform",
+--     "channel": "channel"
+--   }
+--
+function messages()
+
+    print("Content-type: application/json\r")
+    local output = io.stdout
+    local encoding = os.getenv("HTTP_ACCEPT_ENCODING")
+    if encoding and encoding:match("gzip") then
+        print "Content-Encoding: gzip\r"
+        output = io.popen("gzip", "w")
+    end
+    print("\r")
+    io.flush()
+
+    get_lock()
+
+    local node = node_name()
+
+    -- read in message DB and parse the contents
+    local messages = {}
+    for line in io.lines(messages_db_file)
+    do
+        local id, epoch, message, call_sign, node, platform, channel = line:match("^(%S+)\t(%S+)\t(.+)\t([^\t]+)\t(%S*)\t(%S+)\t(%S*)$")
+        if epoch and #epoch > 0 then
+            messages[#messages + 1] = {
+                id = id,
+                epoch = tonumber(epoch),
+                message = message:gsub("\\n", "\n"):gsub('\\"', '"'),
+                call_sign = call_sign,
+                node = node,
+                platform = platform,
+                channel = channel
+            }
+        end
+    end
+
+    if tonumber(query.epoch) and query.call_sign then
+        local users = {}
+
+        -- read the users status file
+        if nixio.fs.stat(local_users_status_file) then
+            for line in io.lines(local_users_status_file)
+            do
+                local call_sign = line:match("^([^\t]+)\t")
+                if call_sign then
+                    users[call_sign] = line
+                end
+            end
+        end
+
+        -- set the timestamp
+        local epoch = os.time()
+        if tonumber(query.epoch) > epoch then
+            epoch = query.epoch
+        end
+
+        -- rewrite user status file updating the timestamp for requesting call sign
+        -- query.id is the meshchat_id
+        local f = io.open(local_users_status_file, "w")
+        if f then
+            local found_user = false
+            for call_sign, line in pairs(users)
+            do
+                if call_sign == query.call_sign then
+                    f:write(call_sign .. "\t" .. query.id .. "\t" .. node .. "\t" .. epoch .. "\t" .. platform .. "\n")
+                    found_user = true
+                else
+                    f:write(line .. "\n")
+                end
+            end
+            if not found_user then
+                f:write(query.call_sign .. "\t" .. query.id .. "\t" .. node .. "\t" .. epoch .. "\t" .. platform .. "\n")
+            end
+            f:close()
+        end
+    end
+
+    release_lock()
+
+    -- order messages according to time
+    table.sort(messages, function(a, b) return a.epoch > b.epoch end)
+
+    output:write(json.stringify(messages))
+    output:flush()
+
+end
+
+--- Return a JSON document describing the sync status.
+--
+-- ## API Parameters
+-- | Parameter | Required | Description                              |
+-- |-----------|----------|------------------------------------------|
+-- | action    |    yes   | Must be set to `sync_status`             |
+--
+-- ## API Response
+--
+-- @example
+--   {
+--     "node": "node_name",
+--     "epoch": sync_time
+--   }
+--
+function sync_status()
+    print("Content-type: application/json\r")
+    print("\r")
+
+    get_lock()
+
+    local status = {}
+    if nixio.fs.stat(sync_status_file) then
+        for line in io.lines(sync_status_file)
+        do
+            local node, epoch = line:match("^(.*)\t(.*)$")
+            status[#status + 1] = {
+                node = node,
+                epoch = tonumber(epoch)
+            }
+        end
+    end
+
+    release_lock()
+
+    table.sort(status, function(a, b) return a.epoch > b.epoch end)
+
+    print(json.stringify(status))
+end
+
+--- Return a list of messages as text.
+function messages_raw()
+    get_lock()
+
+    local md5 = file_md5(messages_db_file)
+    local lines = {}
+    for line in io.lines(messages_db_file)
+    do
+        lines[#lines + 1] = line
+    end
+
+    release_lock()
+
+    print("Content-MD5: " .. md5 .. "\r")
+    print("Content-type: text/plain\r")
+    print("\r")
+
+    for _, line in ipairs(lines)
+    do
+        print(line)
+    end
+end
+
+--- Return the current MD5 has of the messages database.
+function messages_md5()
+    get_lock()
+
+    local md5 = file_md5(messages_db_file)
+
+    release_lock()
+
+    print("Content-type: text/plain\r")
+    print("\r")
+    print(md5)
+end
+
+--- Package the raw messages as the messages.txt file.
+function messages_download()
+    get_lock()
+
+    local md5 = file_md5(messages_db_file)
+    local lines = {}
+    for line in io.lines(messages_db_file)
+    do
+        lines[#lines + 1] = line
+    end
+
+    release_lock()
+
+    print("Content-MD5: " .. md5 .. "\r")
+    print("Content-Disposition: attachment; filename=messages.txt;\r")
+    print("Content-type: text/plain\r")
+    print("\r")
+
+    for _, line in ipairs(lines)
+    do
+        print(line)
+    end
+end
+
+--- Return the list of users as raw text.
+function users_raw()
+    get_lock()
+
+    local md5 = file_md5(local_users_status_file)
+    local lines = {}
+    for line in io.lines(local_users_status_file)
+    do
+        lines[#lines + 1] = line
+    end
+
+    release_lock()
+
+    print("Content-MD5: " .. md5 .. "\r")
+    print("Content-type: text/plain\r")
+    print("\r")
+
+    for _, line in ipairs(lines)
+    do
+        print(line)
+    end
+end
+
+--- Return a JSON document describing the logged in users.
+--
+-- ## API Parameters
+-- | Parameter | Required | Description                              |
+-- |-----------|----------|------------------------------------------|
+-- | action    |    yes   | Must be set to `users`                   |
+--
+-- ## API Response
+--
+-- @example
+--   {
+--     "id": "id_str",
+--     "epoch": epoch_time,
+--     "call_sign": "sender_call_sign',
+--     "node": "originating_node",
+--     "platform": "originating_platform",
+--   }
+--
+function users()
+    print("Content-type: application/json\r")
+    print("\r")
+
+    get_lock()
+
+    local users = {}
+    for line in io.lines(local_users_status_file)
+    do
+        local call_sign, id, node, epoch, platform = line:match("^(.*)\t(.*)\t(.*)\t(.*)\t(.*)$")
+        if epoch and #epoch > 0 then
+            users[#users + 1] = {
+                epoch = tonumber(epoch),
+                id = id,
+                call_sign = call_sign,
+                node = node,
+                platform = platform
+            }
+        end
+    end
+    for line in io.lines(remote_users_status_file)
+    do
+        local call_sign, id, node, epoch, platform = line:match("^(.*)\t(.*)\t(.*)\t(.*)\t(.*)$")
+        if epoch and #epoch > 0 then
+            users[#users + 1] = {
+                epoch = tonumber(epoch),
+                id = id,
+                call_sign = call_sign,
+                node = node,
+                platform = platform
+            }
+        end
+    end
+
+    release_lock()
+
+    table.sort(users, function(a, b) return a.epoch > b.epoch end)
+
+    print(json.stringify(users))
+end
+
+--- Return a list of files as plain text.
+function local_files_raw()
+    get_lock()
+
+    local tmp_file = meshchat_path .. "/meshchat_files_local." .. nixio.getpid()
+    local f = io.open(tmp_file, "w")
+    if not f then
+        die("Cannot list local files")
+    end
+    local name = node_name() .. ":" .. os.getenv("SERVER_PORT")
+    for file in nixio.fs.dir(local_files_dir)
+    do
+        local stat = nixio.fs.stat(local_files_dir .. "/" .. file)
+        f:write(file .. "\t" .. name .. "\t" .. stat.size .. "\t" .. stat.mtime .. platform .. "\n")
+    end
+    f:close()
+
+    local md5 = file_md5(tmp_file)
+
+    release_lock()
+
+    print("Content-MD5: " .. md5 .. "\r")
+    print("Content-type: text/plain\r")
+    print("\r")
+
+    for line in io.lines(tmp_file)
+    do
+        print(line)
+    end
+
+    nixio.fs.remove(tmp_file)
+end
+
+--- Return a specified file as a download.
+--
+-- ## API Parameters
+-- | Parameter | Required | Description                              |
+-- |-----------|----------|------------------------------------------|
+-- | action    |    yes   | Must be set to `file_download`           |
+-- | file      |    yes   | Name of file to downlaod                 |
+--
+-- ## API Response
+--
+-- Returns a page as an octet-stream that is tagged as an attachment
+-- to cause the browser to receive the file as a download.
+--
+function file_download()
+    local file = query.file
+    local file_path = local_files_dir .. "/" .. file
+
+    if file == "" or not nixio.fs.stat(file_path) then
+        error("no file")
+        return
+    end
+
+    get_lock()
+
+    local md5 = file_md5(file_path)
+    local f = io.open(file_path, "rb")
+
+    release_lock()
+
+    print("Content-MD5: " .. md5 .. "\r")
+    print("Content-Disposition: attachment; filename=\"" .. file .. "\";\r")
+    print("Content-type: application/octet-stream\r")
+    print("\r")
+
+    if f then
+        io.write(f:read("*a"))
+        f:close()
+    end
+end
+
+--- Return a JSON document describing the list of files.
+--
+-- ## API Parameters
+-- | Parameter | Required | Description                              |
+-- |-----------|----------|------------------------------------------|
+-- | action    |    yes   | Must be set to `files`                   |
+--
+-- ## API Response
+--
+-- @example
+--   {
+--      "file": "filename",
+--      "epoch": modification_time,
+--      "size": file_size_in_bytes,
+--      "node": "originating_node",
+--      "platform": "originating_platform"
+--   }
+--
+function files()
+    print("Content-type: application/json\r")
+    print("\r")
+
+    get_lock()
+
+    local files = {}
+    local node = node_name() .. ":" .. os.getenv("SERVER_PORT")
+    for file in nixio.fs.dir(local_files_dir)
+    do
+        local stat = nixio.fs.stat(local_files_dir .. "/" .. file)
+        files[#files + 1] = {
+            file = file,
+            epoch = stat.mtime,
+            size = stat.size,
+            node = node,
+            platform = platform
+        }
+        files[#files]["local"] = 1
+    end
+    for file in nixio.fs.dir(meshchat_path)
+    do
+        if file:match("^remote_files%.") then
+            for line in io.lines(meshchat_path .. "/" .. file)
+            do
+                local name, node, size, epoch, platform = line:match("^(.*)\t(.*)\t(.*)\t(.*)\t(.*)$")
+                if epoch and #epoch > 0 then
+                    files[#files + 1] = {
+                        file = name,
+                        epoch = tonumber(epoch),
+                        size = size,
+                        node = node,
+                        platform = platform
+                    }
+                    files[#files]["local"] = 0
+                end
+            end
+        end
+    end
+
+    local stats = file_storage_stats()
+
+    release_lock()
+
+    table.sort(files, function(a, b) return a.epoch > b.epoch end)
+
+    print(json.stringify({
+        stats = stats,
+        files = files
+    }))
+end
+
+--- Delete the specified file.
+function delete_file()
+    nixio.fs.remove(local_files_dir .. "/" .. query.file)
+    print("Content-type: application/json\r")
+    print("\r")
+    print([[{"status":200, "response":"OK"}]])
+end
+
+--- Return the current version string for the messages database.
+function messages_version()
+    print("Content-type: text/plain\r")
+    print("\r")
+    print(get_messages_db_version())
+end
+
+--- Return a JSON document of the messages database.
+function messages_version_ui()
+    print("Content-type: application/json\r")
+    print("\r")
+
+    print(string.format([[{"messages_version":%s}]], get_messages_db_version()))
+
+    get_lock()
+
+    local users = {}
+    for line in io.lines(local_users_status_file)
+    do
+        local call_sign = line:match("^([^\t]+)\t")
+        if call_sign then
+            users[call_sign] = line
+        end
+    end
+
+    local node = node_name()
+    local epoch = os.time()
+    if tonumber(query.epoch) > epoch then
+        epoch = query.epoch
+    end
+
+    -- TODO refactor here and messages function into a single code block
+    local f = io.open(local_users_status_file, "w")
+    if f then
+        local found_user = false
+        for call_sign, line in pairs(users)
+        do
+            if call_sign == query.call_sign then
+                f:write(call_sign .. "\t" .. query.id .. "\t" .. node .. "\t" .. epoch .. "\t" .. platform .. "\n")
+                found_user = true
+            else
+                f:write(line .. "\n")
+            end
+        end
+        if not found_user then
+            f:write(query.call_sign .. "\t" .. query.id .. "\t" .. node .. "\t" .. epoch .. "\t" .. platform .. "\n")
+        end
+        f:close()
+    end
+
+    release_lock()
+end
+
+--- Return a JSON document describing all the hosts.
+--
+-- ## API Parameters
+-- | Parameter | Required | Description                              |
+-- |-----------|----------|------------------------------------------|
+-- | action    |    yes   | Must be set to `hosts`                   |
+--
+-- ## API Response
+--
+-- @example
+--   {
+--      "ip": "ip_address",
+--      "hostname": "hostname",
+--      "node": "node_name"
+--   }
+--
+function hosts()
+    print("Content-type: application/json\r")
+    print("\r")
+
+    local node = node_name()
+    local hosts = {}
+    for line in io.lines("/var/dhcp.leases")
+    do
+        local epoch, mac1, ip, hostname, mac2 = line:match("^(%S+)%s(%S+)%s(%S+)%s(%S+)%s(%S+)$")
+        hosts[#hosts + 1] = {
+            ip = ip,
+            hostname = hostname,
+            node = node
+        }
+    end
+
+    for line in io.lines("/etc/config.mesh/_setup.dhcp.dmz")
+    do
+        local mac, num, hostname = line:match("^(%S+)%s(%S+)%s(%S+)$")
+        local ip = gethostbyname(hostname)
+        hosts[#hosts + 1] = {
+            ip = ip,
+            hostname = hostname,
+            node = node
+        }
+    end
+
+    for _, remote_node in ipairs(node_list())
+    do
+        local f = io.popen("/usr/bin/curl --retry 0 --connect-timeout " .. connect_timeout .. " --speed-time " .. speed_time .. " --speed-limit " .. speed_limit .. " http://" .. remote_node .. ":8080/cgi-bin/meshchat?action=hosts_raw 2> /dev/null")
+        if f then
+            for line in f:lines()
+            do
+                if line ~= "" and not line:match("error") then
+                    local ip, hostname = line:match("^(.+)\t(.+)$")
+                    hosts[#hosts + 1] = {
+                        ip = ip,
+                        hostname = hostname,
+                        node = remote_node
+                    }
+                end
+            end
+            f:close()
+        end
+    end
+
+    table.sort(hosts, function(a, b) return a.hostname < b.hostname end)
+
+    print(json.stringify(hosts))
+end
+
+--- Return a list of hosts as plain text.
+function hosts_raw()
+    print("Content-type: application/json\r")
+    print("\r")
+
+    local hosts = {}
+    for line in io.lines("/var/dhcp.leases")
+    do
+        local epoch, mac1, ip, hostname, mac2 = line:match("^(%S+)%s(%S+)%s(%S+)%s(%S+)%s(%S+)$")
+        hosts[#hosts + 1] = {
+            ip = ip,
+            hostname = hostname
+        }
+    end
+
+    for line in io.lines("/etc/config.mesh/_setup.dhcp.dmz")
+    do
+        local mac, num, hostname = line:match("^(%S+)%s(%S+)%s(%S+)$")
+        local ip = gethostbyname(hostname)
+        hosts[#hosts + 1] = {
+            ip = ip,
+            hostname = hostname
+        }
+    end
+
+    for _, host in ipairs(hosts)
+    do
+        print(host.ip .. "\t" .. host.hostname)
+    end
+end
+
+--- Store a file into the file directory.
+function upload_file()
+    local new_file_size = nixio.fs.stat(tmp_upload_dir .. "/file").size
+
+    get_lock()
+
+    local stats = file_storage_stats()
+
+    release_lock()
+
+    print("Content-type: application/json\r")
+    print("\r")
+
+    if new_file_size > stats.files_free then
+        nixio.fs.remove(tmp_upload_dir .. "/file")
+        print([[{"status":500, "response":"Not enough storage, delete some files"}]])
+    else
+        local fi = io.open(tmp_upload_dir .. "/file", "r")
+        local fo = io.open(local_files_dir .. "/" .. uploadfilename, "w")
+        fo:write(fi:read("*a"))
+        fi:close()
+        fo:close()
+        nixio.fs.remove(tmp_upload_dir .. "/file")
+        print([[{"status":200, "response":"OK"}]])
+    end
+end
+
+--- Return a list of nodes running MeshChat as text.
+--
+-- ## API Parameters
+-- | Parameter | Required | Description                              |
+-- |-----------|----------|------------------------------------------|
+-- | action    |    yes   | Must be set to `meshchat_nodes`          |
+-- | zone_name |    yes   | MeshChat zone name                       |
+--
+-- ## API Response
+--
+-- The list of nodes and ports seperated by a tab.
+--
+-- @example
+--   node1      8080
+--   node2      8080
+--
+function meshchat_nodes()
+    print("Content-type: text/plain\r")
+    print("\r")
+
+    local pattern = "http://(%S+):(%d+)/meshchat|tcp|" .. str_escape(query.zone_name) .. "%s"
+    for line in io.lines("/var/run/services_olsr")
+    do
+        local node, port = line:match(pattern)
+        if node and port then
+            print(node .. "\t" .. port)
+        end
+    end
+end
+
+--- Return a JSON document of the action log.
+--
+-- Currently this call returns an empty list. In the future it will
+-- return a list of action log events.
+--
+function action_log()
+    print("Content-type: application/json\r")
+    print("\r")
+    print("[]")
+end
+
+-- Command dispatch --
+
+if query.action == "messages" then
+    messages()
+elseif query.action == "config" then
+    config()
+elseif query.action == "send_message" then
+    send_message()
+elseif query.action == "sync_status" then
+    sync_status()
+elseif query.action == "messages_raw" then
+    messages_raw()
+elseif query.action == "messages_md5" then
+    messages_md5()
+elseif query.action == "messages_download" then
+    messages_download()
+elseif query.action == "users_raw" then
+    users_raw()
+elseif query.action == "users" then
+    users()
+elseif query.action == "local_files_raw" then
+    local_files_raw()
+elseif query.action == "file_download" then
+    file_download()
+elseif query.action == "files" then
+    files()
+elseif query.action == "delete_file" then
+    delete_file()
+elseif query.action == "messages_version" then
+    messages_version()
+elseif query.action == "messages_version_ui" then
+    messages_version_ui()
+elseif query.action == "hosts" then
+    hosts()
+elseif query.action == "hosts_raw" then
+    hosts_raw()
+elseif query.action == "upload_file" then
+    upload_file()
+elseif query.action == "meshchat_nodes" then
+    meshchat_nodes()
+elseif query.action == "action_log" then
+    action_log()
+else
+    error("error no action")
+end
