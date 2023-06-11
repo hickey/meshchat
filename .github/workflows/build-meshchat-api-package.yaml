@@ -1,4 +1,4 @@
-name: Build API Package
+name: Build MeshChat API Package
 on: push
 env:
   IPK_DIR: package/meshchat-api-ipkg
