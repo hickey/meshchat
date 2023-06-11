@@ -10,5 +10,5 @@ cp -p package/meshchat-api/* $IPK_DIR/CONTROL/
 sed -i "s/\$GITHUB_SERVER_URL/$GITHUB_SERVER_URL/" \
        "s/\$GITHUB_REPOSITORY/$GITHUB_REPOSITORY/" $IPK_DIR/CONTROL/control
 
-install meshchat $IPK_DIR/www/cgi-bin
+install -D meshchat $IPK_DIR/www/cgi-bin
 
