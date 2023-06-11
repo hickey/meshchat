@@ -17,3 +17,8 @@ else
 fi
 
 sed -i "s/^Version:.*/Version: $version/" $IPK_DIR/CONTROL/control
+
+# Update the version in meshchatconfig.lua if present
+if [[ -f $IPK_DIR/www/cgi-bin/meshchatconfig.lua ]]; then
+    sed -i "s/^app_version.*$/app_version                = \"${version}\"/" $IPK_DIR/www/cgi-bin/meshchatconfig.lua
+fi
