@@ -113,7 +113,7 @@ fi
 tmp_dir=$dest_dir/IPKG_BUILD.$$
 mkdir $tmp_dir
 
-tar -C $pkg_dir -czf $tmp_dir/data.tar.gz . --exclude=$CONTROL
+tar -C $pkg_dir --exclude=$CONTROL -czf $tmp_dir/data.tar.gz .
 tar -C $pkg_dir/$CONTROL -czf $tmp_dir/control.tar.gz .
 
 echo "2.0" > $tmp_dir/debian-binary
