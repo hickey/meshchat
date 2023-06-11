@@ -8,11 +8,5 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - run: package/populate-meshchat-api-fs.sh $IPK_DIR
-  update-version-information:
-    runs-on: ubuntu-latest
-    steps:
       - run: package/update-version.sh $IPK_DIR
-  package-files:
-    runs-on: ubuntu-latest
-    steps:
       - run: package/ipk-build.sh $IPK_DIR
