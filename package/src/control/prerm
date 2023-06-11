@@ -1,8 +1,0 @@
-#!/bin/sh
-
-/etc/init.d/meshchatsync disable
-/etc/init.d/meshchatsync stop
-
-rm -rf /tmp/meshchat
-
-exit 0
