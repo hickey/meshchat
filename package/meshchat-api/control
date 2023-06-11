@@ -1,8 +1,8 @@
-Package: meshchat
-Version: 2.9
-Depends: curl
+Package: meshchat-api
+Version:
+Depends: lua
 Provides:
-Source: package/meshchat
+Source: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY
 Section: net
 Priority: optional
 Maintainer: Tim Wilkinson (KN6PLV) and Trevor Paskett (K7FPV)
