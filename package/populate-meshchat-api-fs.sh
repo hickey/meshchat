@@ -12,5 +12,5 @@ sed -i "s%\$GITHUB_SERVER_URL%$GITHUB_SERVER_URL%" $IPK_DIR/CONTROL/control
 sed -i "s%\$GITHUB_REPOSITORY%$GITHUB_REPOSITORY%" $IPK_DIR/CONTROL/control
 
 # Populate the filesystem image for the package
-install -D meshchat $IPK_DIR/www/cgi-bin/meshchat
+install -D api/meshchat $IPK_DIR/www/cgi-bin/meshchat
 
