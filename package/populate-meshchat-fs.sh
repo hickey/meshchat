@@ -14,5 +14,7 @@ sed -i "s%\$GITHUB_REPOSITORY%$GITHUB_REPOSITORY%" $IPK_DIR/CONTROL/control
 # Populate the filesystem image for the package
 install -d $IPK_DIR/www
 install www/* $IPK_DIR/www
+install -d $IPK_DIR/www/cgi-bin
+install www/cgi-bin/* $IPK_DIR/www/cgi-bin
 install -D support/meshchatsync-init.d $IPK_DIR/etc/init.d/meshchatsync
 install -D support/meshchatsync $IPK_DIR/usr/local/bin/meshchatsync
