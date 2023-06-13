@@ -133,7 +133,7 @@ function meshchat_init() {
         Cookies.set('meshchat_id', make_id());
         meshchat_id = Cookies.get('meshchat_id');
     }
-
+    //console.log(meshchat_id);
     $('#submit-message').on('click', function(e) {
         e.preventDefault();
         if ($('#message').val().length == 0) return;
