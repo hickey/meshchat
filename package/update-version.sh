@@ -12,8 +12,11 @@ if [[ "$GITHUB_REF_TYPE" == 'tag' ]]; then
         version="${GITHUB_REF_NAME#v}"
     fi
 else
-    # branch gets date code
-    version=$(date +%Y%m%d)
+    # branch gets date code-branch_name-commit
+    date=$(date +%Y%m%d)
+    branch=$(git rev-parse --abbrev-ref HEAD)
+    commit=$(git rev-parse --short HEAD)
+    version="${date}-${branch}-${commit}"
 fi
 
 sed -i "s/^Version:.*/Version: $version/" $IPK_DIR/CONTROL/control
