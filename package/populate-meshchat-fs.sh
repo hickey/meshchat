@@ -15,6 +15,8 @@ sed -i "s%\$GITHUB_REPOSITORY%$GITHUB_REPOSITORY%" $IPK_DIR/CONTROL/control
 install -d $IPK_DIR/www/meshchat
 install www/* $IPK_DIR/www/meshchat
 install -d $IPK_DIR/www/cgi-bin
-install www/cgi-bin/* $IPK_DIR/www/cgi-bin
-install -D support/meshchatsync-init.d $IPK_DIR/etc/init.d/meshchatsync
-install -D support/meshchatsync $IPK_DIR/usr/local/bin/meshchatsync
+install -m 755 meshchat $IPK_DIR/www/cgi-bin
+install -m 644 meshchatlib.lua $IPK_DIR/www/cgi-bin
+install -m 644 meshchatconfig.lua $IPK_DIR/www/cgi-bin
+install -D support/meshchatsync-init.d -m 755 $IPK_DIR/etc/init.d/meshchatsync
+install -D support/meshchatsync -m 755 $IPK_DIR/usr/local/bin/meshchatsync
