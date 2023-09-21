@@ -1,0 +1,64 @@
+name: Bug Report
+description: File a bug for the MeshChat project
+title: "[Bug]: "
+labels:
+  - bug
+assignees:
+  - hickey
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking the time to create a bug report. Please
+        attempt to fill in as much information as you are able to.
+  - type: input
+    id: contact
+    attributes:
+      label: Contact Details
+      description: How can we get in touch with you if we need more info?
+      placeholder: ex. email@example.com
+    validations:
+      required: false
+  - type: dropdown
+    id: version
+    attributes:
+      label: Version
+      description: Version of MeshChat?
+      options:
+        - v1.x
+        - v2.0 - v2.8
+        - v2.9
+      default: 0
+    validations:
+      required: true
+  - type: dropdown
+    id: system_type
+    attributes:
+      label: System Type
+      description: What type of system is MeshChat installed on?
+      options:
+        - AREDN node
+        - Linux
+        - Unknown
+      default: 0
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Also tell us, what did you expect to happen?
+      placeholder: Tell us what you see!
+      value: "A bug happened!"
+    validations:
+      required: true
+  - type: dropdown
+    id: browsers
+    attributes:
+      label: What browsers are you seeing the problem on?
+      multiple: true
+      options:
+        - Firefox
+        - Chrome
+        - Safari
+        - Microsoft Edge
