@@ -1,0 +1,16 @@
+name: Build MeshChat API Package
+on: push
+env:
+  IPK_DIR: package/meshchat-api-ipkg
+jobs:
+  create-meshchat-api-package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: package/populate-meshchat-api-fs.sh $IPK_DIR
+      - run: package/update-version.sh $IPK_DIR
+      - run: package/ipk-build.sh $IPK_DIR
+      - uses: actions/upload-artifact@v3
+        with:
+          name: meshchat-api
+          path: meshchat-api_*
