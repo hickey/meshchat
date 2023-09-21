@@ -1,0 +1,46 @@
+name: Feature Request
+description: Looking to add an enhancement to the MeshChat project
+title: "[Feature]: "
+labels:
+  - enhancement
+assignees:
+  - hickey
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking the time to let us know about your idea. Please
+        attempt to fill in as much information as you are able to.
+  - type: input
+    id: contact
+    attributes:
+      label: Contact Details
+      description: How can we get in touch with you if we need more info?
+      placeholder: ex. email@example.com
+    validations:
+      required: false
+  - type: dropdown
+    id: enhancement_type
+    attributes:
+      label: Enhancement Type
+      description: What sort of enhancement is this?
+      options:
+        - Graphical interface
+        - Message formatting
+        - File sharing
+        - API improvements
+        - Documentation
+        - Installation method
+        - Other
+      default: 0
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What is your idea or what can be improved?
+      description: Please be descriptive so that we can better understand the enhancement.
+      placeholder: Tell us your idea.
+    validations:
+      required: true
+
