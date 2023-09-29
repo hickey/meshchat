@@ -13,4 +13,6 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: meshchat
-          path: meshchat_*
+          path: |
+            meshchat_*.ipk
+            VERSION
