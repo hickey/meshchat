@@ -3,6 +3,7 @@ description: File a bug for the MeshChat project
 title: "[Bug]: "
 labels:
   - bug
+  - needs triage
 assignees:
   - hickey
 body:
