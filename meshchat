@@ -112,11 +112,14 @@ function config()
 
     local settings = {
         version = app_version,
+        protocol_verison = protocol_version,
         node = node_name(),
         zone = zone_name(),
+        default_channel = default_channel,
+        debug = debug,
     }
 
-    print(json.encode(settings))
+    print(luci.jsonc.stringify(settings))
 end
 
 --- Send a message to the MeshChat instance.
@@ -634,7 +637,7 @@ end
 function messages_version_ui()
     print("Content-type: application/json\r")
     print("\r")
-    
+
     print(string.format([[{"messages_version":%s}]], get_messages_db_version()))
 
     get_lock()
@@ -695,7 +698,7 @@ end
 function hosts()
     print("Content-type: application/json\r")
     print("\r")
-    
+
     local node = node_name()
     local hosts = {}
     for line in io.lines("/var/dhcp.leases")
@@ -747,7 +750,7 @@ end
 function hosts_raw()
     print("Content-type: application/json\r")
     print("\r")
-    
+
     local hosts = {}
     for line in io.lines("/var/dhcp.leases")
     do
