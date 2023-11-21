@@ -109,7 +109,14 @@ end
 function config()
     print("Content-type: application/json\r")
     print("\r")
-    print(string.format([[{"version":"%s","node":"%s","zone":"%s"}]], app_version, node_name(), zone_name()))
+
+    local settings = {
+        version = app_version,
+        node = node_name(),
+        zone = zone_name(),
+    }
+
+    print(json.encode(settings))
 end
 
 --- Send a message to the MeshChat instance.
