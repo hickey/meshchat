@@ -38,7 +38,7 @@
 package.path = package.path .. ";/www/cgi-bin/?.lua"
 
 require('luci.http')
-require("luci.jsonc")
+local json = require("luci.jsonc")
 require("nixio")
 require("meshchatconfig")
 require("meshchatlib")
@@ -119,7 +119,7 @@ function config()
         debug = debug,
     }
 
-    print(luci.jsonc.stringify(settings))
+    print(json.stringify(settings))
 end
 
 --- Send a message to the MeshChat instance.
@@ -288,7 +288,7 @@ function messages()
     -- order messages according to time
     table.sort(messages, function(a, b) return a.epoch > b.epoch end)
 
-    output:write(luci.jsonc.stringify(messages))
+    output:write(json.stringify(messages))
     output:flush()
 
 end
@@ -330,7 +330,7 @@ function sync_status()
 
     table.sort(status, function(a, b) return a.epoch > b.epoch end)
 
-    print(luci.jsonc.stringify(status))
+    print(json.stringify(status))
 end
 
 --- Return a list of messages as text.
@@ -472,7 +472,7 @@ function users()
 
     table.sort(users, function(a, b) return a.epoch > b.epoch end)
 
-    print(luci.jsonc.stringify(users))
+    print(json.stringify(users))
 end
 
 --- Return a list of files as plain text.
@@ -612,7 +612,7 @@ function files()
 
     table.sort(files, function(a, b) return a.epoch > b.epoch end)
 
-    print(luci.jsonc.stringify({
+    print(json.stringify({
         stats = stats,
         files = files
     }))
@@ -743,7 +743,7 @@ function hosts()
 
     table.sort(hosts, function(a, b) return a.hostname < b.hostname end)
 
-    print(luci.jsonc.stringify(hosts))
+    print(json.stringify(hosts))
 end
 
 --- Return a list of hosts as plain text.
