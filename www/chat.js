@@ -1,5 +1,5 @@
 var meshchat_id;
-var last_messages_update = epoch();
+var last_meswsages_update = epoch();
 var call_sign            = 'NOCALL';
 var enable_video         = 0;         // TODO move to meshchat config
 
@@ -78,6 +78,8 @@ function update_channels(reason) {
 }
 
 function start_chat() {
+    debug("start_chat()");
+
     //$('#logout').html('Logout ' + call_sign);
     messages.subscribe(update_messages);
     messages.subscribe(new_messages);
@@ -94,6 +96,8 @@ function start_chat() {
 }
 
 function meshchat_init() {
+    debug("meshchat_init()");
+
     $('#message').val('');
     meshchat_id = Cookies.get('meshchat_id');
     if (meshchat_id == undefined) {
@@ -210,6 +214,8 @@ function meshchat_init() {
 
 let users_updating = false;
 function load_users() {
+    debug("load_users()");
+
     if (users_updating == true) return;
     console.debug("load_users()");
 
