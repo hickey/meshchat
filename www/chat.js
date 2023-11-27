@@ -4,14 +4,13 @@ var meshchat_id;
 var peer;
 var mediaConnection;
 var enable_video = 0;
-var messages_updating = false;
+
 var users_updating = false;
-var messages = [];
+var messages = new Messages();
 var channel_filter = '';
 var messages_version = 0;
 var alert = new Audio('alert.mp3');
-var message_db_version = 0;
-var pending_message_db_version = 0;
+
 var search_filter = '';
 
 $(function() {
@@ -25,11 +24,11 @@ function monitor_last_update() {
 
 function start_chat() {
     //$('#logout').html('Logout ' + call_sign);
-    load_messages();
+    messages.check();
     load_users();
     monitor_last_update();
     setInterval(function() {
-        load_messages()
+        messages.check();
     }, 15000);
     setInterval(function() {
         load_users()
@@ -169,72 +168,13 @@ function meshchat_init() {
     }
 }
 
-function load_messages() {
-    if (messages_updating == true) return;
-
-    messages_updating = true;
-
-    $.ajax({
-        url: '/cgi-bin/meshchat?action=messages_version_ui&call_sign=' + call_sign + '&id=' + meshchat_id + '&epoch=' + epoch(),
-        type: "GET",
-        dataType: "json",
-        context: this,
-        cache: false,
-        success: function(data, textStatus, jqXHR)
-        {
-            if (data == null) {
-                messages_updating = false;
-                return;
-            }
-
-            if (data.messages_version != message_db_version) {
-                pending_message_db_version = data.messages_version;
-                fetch_messages();
-            } else {
-                messages_updating = false;
-                last_messages_update = epoch();
-            }
-        },
-        error: function(jqXHR, textStatus, errorThrown)
-        {
-            messages_updating = false;
-        },
-        complete: function(jqXHR, textStatus) {
-
-        }
-    });
-
-}
-
-function fetch_messages() {
-    $.ajax({
-        url: '/cgi-bin/meshchat?action=messages&call_sign=' + call_sign + '&id=' + meshchat_id + '&epoch=' + epoch(),
-        type: "GET",
-        dataType: "json",
-        context: this,
-        cache: false,
-        success: function(data, textStatus, jqXHR)
-        {
-            if (data == null) return;
-
-            messages = data;
-
-            process_messages();
-            last_messages_update = epoch();
-            message_db_version = pending_message_db_version;
-        },
-        complete: function(jqXHR, textStatus) {
-            //console.log( "messages complete" );
-            messages_updating = false;
-        }
-    });
-}
 
 function process_messages() {
     var html = '';
 
     var cur_send_channel = $("#send-channel").val();
 
+    // clear channel selection boxes
     $('#send-channel')
     .find('option')
     .remove()
@@ -256,6 +196,7 @@ function process_messages() {
         var date = new Date(0);
         date.setUTCSeconds(messages[i].epoch);
         var message = messages[i].message;
+        // replace CRLF with line breaks
         message = message.replace(/(\r\n|\n|\r)/g, "<br/>");
 
         var id = parseInt(messages[i].id, 16);
