@@ -165,3 +165,11 @@ class Messages {
         return row;
     }
 }
+    // generate unique message IDs
+    _create_id() {
+        let seed = epoch().toString() + Math.floor(Math.random() * 99999);
+        let hash = md5(seed);
+        return hash.substring(0,8);
+    }
+
+}
