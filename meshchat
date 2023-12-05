@@ -93,7 +93,7 @@ function send_message()
     print("\r")
 
     local message = query.message:gsub("\n", "\\n"):gsub('"', '\\"'):gsub("\t", " ")
-
+    local id = query.id or hash();
     local epoch = os.time()
     if tonumber(query.epoch) > epoch then
         epoch = query.epoch
@@ -106,7 +106,7 @@ function send_message()
         release_lock()
         die("Cannot send message")
     end
-    f:write(hash() .. "\t" .. epoch .. "\t" .. message .. "\t" .. query.call_sign .. "\t" .. node_name() .. "\t" .. platform .. "\t" .. query.channel .. "\n")
+    f:write(id .. "\t" .. epoch .. "\t" .. message .. "\t" .. query.call_sign .. "\t" .. node_name() .. "\t" .. platform .. "\t" .. query.channel .. "\n")
     f:close()
 
     sort_and_trim_db()
@@ -172,6 +172,7 @@ function messages()
         end
 
         -- rewrite user status file updating the timestamp for requesting call sign
+        -- query.id is the meshchat_id
         local f = io.open(local_users_status_file, "w")
         if f then
             local found_user = false
@@ -493,6 +494,7 @@ function messages_version_ui()
         epoch = query.epoch
     end
 
+    -- TODO refactor here and messages function into a single code block
     local f = io.open(local_users_status_file, "w")
     if f then
         local found_user = false
