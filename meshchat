@@ -162,7 +162,7 @@ function send_message()
     local message = query.message:gsub("\n", "\\n"):gsub('"', '\\"'):gsub("\t", " ")
     local id = query.id or hash();
     local epoch = os.time()
-    if tonumber(query.epoch) > epoch then
+    if query.epoch and tonumber(query.epoch) > epoch then
         epoch = query.epoch
     end
 
