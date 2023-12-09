@@ -92,6 +92,13 @@ end
 
 --- Returns a JSON document with basic node configuration.
 --
+-- ## API Parameters
+-- | Parameter | Required | Description                              |
+-- |-----------|----------|------------------------------------------|
+-- | action    |    yes   | Must be set to `config`                  |
+--
+-- ## API Response
+--
 -- @example
 --   {
 --      "version": "meshchat_version",
@@ -106,6 +113,28 @@ function config()
 end
 
 --- Send a message to the MeshChat instance.
+--
+-- ## API Parameters
+-- | Parameter | Required | Description                              |
+-- |-----------|----------|------------------------------------------|
+-- | action    |    yes   | Must be set to `send_message`            |
+-- | message   |    yes   | Message body                             |
+-- | call_sign |    yes   | Call sign of the sender                  |
+-- | channel   |    no    | Channel name to post message             |
+-- | epoch     |    no    | Timestamp specified as unixtime          |
+--
+-- @note message
+--   Needs to have newslines and double quotes escaped.
+--
+-- @note channel
+--   If not specified or set to empty string will post message to
+--   `Everything` channel
+--
+-- @note epoch
+--   If not specified, the current time on the MeshChat server will
+--   be used.
+--
+-- ## API Response
 --
 -- On a successful entry of the message into the database a success JSON
 -- document will be returned.
@@ -147,6 +176,16 @@ function send_message()
 end
 
 --- Return a list of message stored on the MeshChat instance.
+--
+-- ## API Parameters
+-- | Parameter | Required | Description                              |
+-- |-----------|----------|------------------------------------------|
+-- | action    |    yes   | Must be set to `messages`                |
+-- | call_sign |    no    | Call sign of the requester               |
+-- | epoch     |    no    | Timestamp specified as unixtime          |
+-- | id        |    no    | Generated MeshChat ID                    |
+--
+-- ## API Response
 --
 -- @example
 --   {
@@ -238,6 +277,13 @@ function messages()
 end
 
 --- Return a JSON document describing the sync status.
+--
+-- ## API Parameters
+-- | Parameter | Required | Description                              |
+-- |-----------|----------|------------------------------------------|
+-- | action    |    yes   | Must be set to `sync_status`             |
+--
+-- ## API Response
 --
 -- @example
 --   {
@@ -355,6 +401,13 @@ end
 
 --- Return a JSON document describing the logged in users.
 --
+-- ## API Parameters
+-- | Parameter | Required | Description                              |
+-- |-----------|----------|------------------------------------------|
+-- | action    |    yes   | Must be set to `users`                   |
+--
+-- ## API Response
+--
 -- @example
 --   {
 --     "id": "id_str",
@@ -440,6 +493,14 @@ end
 
 --- Return a specified file as a download.
 --
+-- ## API Parameters
+-- | Parameter | Required | Description                              |
+-- |-----------|----------|------------------------------------------|
+-- | action    |    yes   | Must be set to `file_download`           |
+-- | file      |    yes   | Name of file to downlaod                 |
+--
+-- ## API Response
+--
 -- Returns a page as an octet-stream that is tagged as an attachment
 -- to cause the browser to receive the file as a download.
 --
@@ -471,6 +532,13 @@ function file_download()
 end
 
 --- Return a JSON document describing the list of files.
+--
+-- ## API Parameters
+-- | Parameter | Required | Description                              |
+-- |-----------|----------|------------------------------------------|
+-- | action    |    yes   | Must be set to `files`                   |
+--
+-- ## API Response
 --
 -- @example
 --   {
@@ -595,6 +663,13 @@ end
 
 --- Return a JSON document describing all the hosts.
 --
+-- ## API Parameters
+-- | Parameter | Required | Description                              |
+-- |-----------|----------|------------------------------------------|
+-- | action    |    yes   | Must be set to `hosts`                   |
+--
+-- ## API Response
+--
 -- @example
 --   {
 --      "ip": "ip_address",
@@ -712,6 +787,14 @@ function upload_file()
 end
 
 --- Return a list of nodes running MeshChat as text.
+--
+-- ## API Parameters
+-- | Parameter | Required | Description                              |
+-- |-----------|----------|------------------------------------------|
+-- | action    |    yes   | Must be set to `meshchat_nodes`          |
+-- | zone_name |    yes   | MeshChat zone name                       |
+--
+-- ## API Response
 --
 -- The list of nodes and ports seperated by a tab.
 

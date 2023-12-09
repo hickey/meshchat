@@ -35,7 +35,7 @@
 --]]
 
 --- @module meshchatconfig
--- @section Configuration
+-- @section MeshChat Configuration
 
 --- Base directory to store all MeshChat generated files
 -- @type string
