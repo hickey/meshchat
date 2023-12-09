@@ -34,8 +34,17 @@
 
 --]]
 
+--- @module meshchatconfig
+-- @section Configuration
+
+--- Base directory to store all MeshChat generated files
+-- @type string
 meshchat_path              = "/tmp/meshchat"
+--- Maximum number of messages in the database
+-- @type int
 max_messages_db_size       = 500
+--- Maximum amount of filesystem space for storing files
+-- @type int
 max_file_storage           = 512 * 1024
 lock_file                  = meshchat_path .. "/lock"
 messages_db_file           = meshchat_path .. "/messages"
@@ -47,14 +56,22 @@ remote_files_file          = meshchat_path .. "/files_remote"
 messages_version_file      = meshchat_path .. "/messages_version"
 local_files_dir            = meshchat_path .. "/files"
 tmp_upload_dir             = "/tmp/web/upload"
+--- How often to check for new messages
+-- @type int
 poll_interval              = 10
 non_meshchat_poll_interval = 600
 valid_future_message_time  = 30 * 24 * 60 * 60
 connect_timeout            = 5
 speed_time                 = 10
 speed_limit                = 1000
+--- Type of node that MeshChat is installed on ("node" or "pi")
+-- @type string
 platform                   = "node"
+--- Turn debug message on
+-- @type bool
 debug                      = 0
 extra_nodes                = {}
+--- MeshChat protocol version
+-- @type string
 protocol_version           = "1.02"
 app_version                = "2.9"
