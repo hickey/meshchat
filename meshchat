@@ -95,7 +95,7 @@ function send_message()
     local message = query.message:gsub("\n", "\\n"):gsub('"', '\\"'):gsub("\t", " ")
 
     local epoch = os.time()
-    if tonumber(query.epoch) > epoch then
+    if query.epoch and tonumber(query.epoch) > epoch then
         epoch = query.epoch
     end
 
@@ -467,7 +467,7 @@ end
 function messages_version_ui()
     print("Content-type: application/json\r")
     print("\r")
-    
+
     print(string.format([[{"messages_version":%s}]], get_messages_db_version()))
 
     get_lock()
@@ -511,7 +511,7 @@ end
 function hosts()
     print("Content-type: application/json\r")
     print("\r")
-    
+
     local node = node_name()
     local hosts = {}
     for line in io.lines("/var/dhcp.leases")
@@ -562,7 +562,7 @@ end
 function hosts_raw()
     print("Content-type: application/json\r")
     print("\r")
-    
+
     local hosts = {}
     for line in io.lines("/var/dhcp.leases")
     do
