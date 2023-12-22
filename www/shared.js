@@ -1,11 +1,15 @@
+var config;
+
 $(function() {
     $('#logout').on('click', function(e){
-	   e.preventDefault();
-	   Cookies.remove('meshchat_call_sign');
-	   window.location = '/meshchat';
+        e.preventDefault();
+        Cookies.remove('meshchat_call_sign');
+        window.location = '/meshchat';
     });
 
     $.getJSON('/cgi-bin/meshchat?action=config', function(data) {
+        config = data;
+
         document.title = 'Mesh Chat v' + data.version;
         $('#version').html('<strong>Mesh Chat v' + data.version + '</strong>');
         $('#node').html('<strong>Node:</strong> ' + data.node);
@@ -15,13 +19,21 @@ $(function() {
     });
 });
 
+function node_name() {
+    return config.node;
+}
+
+function platform() {
+    return config.platform || 'node'; // TODO temp patch until config API is updated
+}
+
 function epoch() {
     return Math.floor(new Date() / 1000);
 }
 
 function format_date(date) {
     var string;
-    
+
     var year = String(date.getFullYear());
 
     string = (date.getMonth()+1) + '/' + date.getDate() + '/' + year.slice(-2);
