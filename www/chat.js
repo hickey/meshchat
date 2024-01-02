@@ -1,5 +1,5 @@
 var meshchat_id;
-var last_meswsages_update = epoch();
+var last_messages_update = epoch();
 var call_sign            = 'NOCALL';
 var enable_video         = 0;         // TODO move to meshchat config
 
@@ -79,6 +79,30 @@ function update_channels(reason) {
 
 function start_chat() {
     debug("start_chat()");
+
+    // wait until the configuration is fully loaded
+    load_config().then(function(data) {
+        config = data;
+        document.title = 'Mesh Chat v' + data.version;
+        $('#version').html('<strong>Mesh Chat v' + data.version + '</strong>');
+        $('#node').html('<strong>Node:</strong> ' + data.node);
+        $('#zone').html('<strong>Zone:</strong> ' + data.zone);
+        $('#callsign').html('<strong>Call Sign:</strong> ' + Cookies.get('meshchat_call_sign'));
+        $('#copyright').html('Mesh Chat v' + data.version + ' Copyright &copy; ' + new Date().getFullYear() + ' <a href="http://www.trevorsbench.com">Trevor Paskett - K7FPV</a> <small>(Lua by KN6PLV)</small>');
+
+        if ("default_channel" in data) {
+            default_channel = data.default_channel;
+            $('#send-channel').val(data.default_channel);
+            $('#channels').val(data.default_channel);
+        }
+
+        if ("debug" in data) {
+            context.debug = data.debug == 1 ? true : false;
+        }
+
+        // signal that the config has finished loading
+        context.config_loaded = true;
+    })
 
     //$('#logout').html('Logout ' + call_sign);
     messages.subscribe(update_messages);
