@@ -30,7 +30,7 @@ body:
         - v2.0 - v2.8
         - v2.9
         - v2.10
-        - nightly build
+        - development build (include version in what happened)
       default: 0
     validations:
       required: true
@@ -51,10 +51,42 @@ body:
     attributes:
       label: What happened?
       description: Also tell us, what did you expect to happen?
-      placeholder: Tell us what you see!
-      value: "A bug happened!"
+      placeholder: |
+        Describe to the best of your ability what happened or what you
+        did to trigger the problem.
     validations:
       required: true
+  - type: textarea
+    id: config
+    attributes:
+      label: MeshChat configuration
+      description: |
+        If you are the admin of the MeshChat instance, it is asked that
+        you past your MeshChat configuration file between the back ticks
+        to aid in troubleshooting.
+      value: |
+        ```
+        <Insert config file here>
+        ```
+  - type: dropdown
+    id: connection_type
+    attributes:
+      label: Connection type
+      multiple: false
+      description: |
+        How is the node that is running the MeshChat instance connected?
+        If you know the mesh network that the node is connected to please
+        indicate the name of the mesh network below in the node name field.
+      options:
+        - Non-connected mesh network
+        - Mesh network connected through IP tunnel
+        - Mesh network connected through a supernode
+        - I don't know
+  - type: input
+    id: node_name
+    attributes:
+      label: Node name
+      description: Please specify the node name where MeshChat runs.
   - type: dropdown
     id: browsers
     attributes:
