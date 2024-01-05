@@ -1,7 +1,7 @@
 var meshchat_id;
 var last_messages_update = epoch();
 var call_sign            = 'NOCALL';
-var enable_video         = 0;         // TODO move to meshchat config
+var enable_video         = 0;
 
 var messages         = new Messages();
 let alert            = new Audio('alert.mp3');
@@ -23,7 +23,8 @@ function monitor_last_update() {
 
 function update_messages(reason=Messages.MSG_UPDATE) {
     if (reason != Messages.MSG_UPDATE) return;
-    console.debug("update_messages(reason=" + reason + ")");
+    let caller = (new Error()).stack.split("\n")[3].split("/")[0];
+    console.debug(caller + "->update_messages(reason=MSG_UPDATE)");
 
     // update the message table
     let html = messages.render($('#channels').val(), $('#search').val());
@@ -33,13 +34,15 @@ function update_messages(reason=Messages.MSG_UPDATE) {
 
 function new_messages(reason) {
     if (reason != Messages.NEW_MSG) return;
-    console.debug("new_messages(reason=" + reason + ")");
+    let caller = (new Error()).stack.split("\n")[3].split("/")[0];
+    console.debug(caller + "->new_messages(reason=NEW_MSG)");
     alert.play();
 }
 
 function update_channels(reason) {
     if (reason != Messages.CHAN_UPDATE) return;
-    console.debug("update_channels(reason="+ reason + ")");
+    let caller = (new Error()).stack.split("\n")[3].split("/")[0];
+    console.debug(caller + "->update_channels(reason=CHAN_UPDATE)");
 
     let msg_refresh      = false;
     let channels         = messages.channels().sort();

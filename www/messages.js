@@ -233,6 +233,9 @@ class Messages {
 
         // this._message_checksum == null is the first rendering of the
         // message table. No need to sound an alert.
+        /* TODO checksum is not working as expected and the audio alert
+                is played twice when a new message is entered locally
+                and when changing channels */
         if (this._message_checksum != null && message_checksum != this._message_checksum) {
             // reset internal message checksum and notify of new messages
             this.notify(Messages.NEW_MSG);
