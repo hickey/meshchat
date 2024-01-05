@@ -111,7 +111,7 @@ function start_chat() {
     messages.subscribe(update_messages);
     messages.subscribe(new_messages);
     messages.subscribe(update_channels);
-    messages.set_channel("");
+    messages.set_channel(config['default_channel']);
     messages.check();
     load_users();
     monitor_last_update();
