@@ -91,6 +91,8 @@ class Messages {
     update(msg_ids=null) {
         console.debug("Messages.update(msg_ids=" + JSON.stringify(msg_ids) + " )");
 
+        let message_checksum = 0;
+
         if (msg_ids === null) {
             msg_ids = Array.from(this.messages.keys());
         }
@@ -114,6 +116,11 @@ class Messages {
                 this.__channels.push(message.channel);
             }
 
+            // add this message to the checksum
+            if (message.channel == this.__current_channel) {
+                message_checksum += parseInt(message.id, 16);
+            }
+
             this.messages.set(id, message);
         }
 
@@ -124,11 +131,28 @@ class Messages {
                 let b_msg = this.messages.get(b);
                 return a_msg.epoch > b_msg.epoch ? -1 : 1;
             });
+
+        // this._message_checksum == null is the first rendering of the
+        // message table. No need to sound an alert.
+        if (this._message_checksum != null && message_checksum != this._message_checksum) {
+            // reset internal message checksum and notify of new messages
+            this.notify(Messages.NEW_MSG);
+            this._message_checksum = message_checksum;
+        }
     }
 
     set_channel(chan) {
         console.debug("Messages.set_channel(chan=" + chan + ")");
         this.__current_channel = chan;
+
+        // need to recalculate the message checksum
+        let message_checksum = 0;
+        for (var id of this.message_order) {
+            let message = this.messages.get(id);
+            if (message.channel == chan) {
+                message_checksum += parseInt(message.id, 16);
+            }
+        }
     }
 
     current_channel() {
@@ -203,8 +227,6 @@ class Messages {
         console.debug("Messages.render(channel=" + channel + ", search_filter=" + search_filter + ")");
         let html = '';
         let search = search_filter.toLowerCase();
-        // compare with last time render was called to detect new messages
-        let message_checksum = 0;
 
         for (var id of this.message_order) {
             var message = this.messages.get(id);
@@ -226,21 +248,9 @@ class Messages {
             }
 
             if (channel == message.channel || this.__channel == '') {
-                message_checksum += parseInt(id, 16);
                 html += this.render_row(message);
             }
         }
-
-        // this._message_checksum == null is the first rendering of the
-        // message table. No need to sound an alert.
-        /* TODO checksum is not working as expected and the audio alert
-                is played twice when a new message is entered locally
-                and when changing channels */
-        if (this._message_checksum != null && message_checksum != this._message_checksum) {
-            // reset internal message checksum and notify of new messages
-            this.notify(Messages.NEW_MSG);
-        }
-        this._message_checksum = message_checksum;
 
         // provide a message if no messages were found
         if (html == "") {
