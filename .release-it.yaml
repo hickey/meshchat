@@ -61,5 +61,13 @@ plugins:
         - type: feat
           section: Features
         - type: fix
+<<<<<<< HEAD
           section: Bug Fixes
 >>>>>>> 58e9870 (chore: create release CI job)
+||||||| parent of 516f180 (chore: add documentation section to changelog)
+          section: Bug Fixes
+=======
+          section: Bug Fixes
+        - type: docs
+          section: Documentation
+>>>>>>> 516f180 (chore: add documentation section to changelog)
