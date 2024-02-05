@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 git:
   commit: true
   commitMessage: "chore(release): ${version}"
@@ -29,3 +30,36 @@ plugins:
         - type: fix
           section: Bug Fixes
 
+||||||| parent of 58e9870 (chore: create release CI job)
+=======
+git:
+  commit: true
+  commitMessage: "chore(release): ${version}"
+  commitArgs: ""
+  tag: true
+  tagName: "v${version}"
+  tagAnnotation: "Automated release: ${version}"
+  push: true
+  requireBranch: release
+  requireCommits: true
+  changelog: "npx auto-changelog --stdout --commit-limit false"
+
+github:
+  release: true
+  releaseName: "v${version}"
+  assets: ["*.ipk", "*.deb"]
+
+npm:
+  publish: false
+
+plugins:
+  "@release-it/conventional-changelog":
+    infile: CHANGELOG.md
+    preset:
+      name: conventionalcommits
+      types:
+        - type: feat
+          section: Features
+        - type: fix
+          section: Bug Fixes
+>>>>>>> 58e9870 (chore: create release CI job)
