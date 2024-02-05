@@ -1,0 +1,35 @@
+name: Release MeshChat Package
+on:
+    pull_request:
+        types: [closed]
+        branches: [release]
+env:
+  IPK_DIR: package/meshchat-ipkg
+jobs:
+  calculate-version-number:
+    runs-on: registry.gitlab.com/wt0f/gitlab-runner-images/node:latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: npm install -g release-it @release-it/conventional-changelog @commitlint/config-conventional @commitlint/cli auto-changelog
+      - run: npx release-it --ci
+
+
+  #     - uses: actions/upload-artifact@v3
+  #       with:
+  #         name: meshchat
+  #         path: |
+  #           VERSION
+
+  # create-meshchat-package:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - run: package/populate-meshchat-fs.sh $IPK_DIR
+  #     - run: package/update-version.sh $IPK_DIR
+  #     - run: package/ipk-build.sh $IPK_DIR
+  #     - uses: actions/upload-artifact@v3
+  #       with:
+  #         name: meshchat
+  #         path: |
+  #           meshchat_*.ipk
+  #           VERSION
