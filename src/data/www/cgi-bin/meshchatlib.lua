@@ -56,11 +56,19 @@ function node_name()
 end
 
 function zone_name()
-    for line in io.lines("/etc/config/services")
-    do
-        local zone = line:match(":8080/meshchat|tcp|(.+)")
-        if zone then
-            return zone
+    local dmz_mode = uci.cursor("/etc/config.mesh"):get("aredn", "@dmz[0]", "mode")
+    local servfile = "/etc/config.mesh/_setup.services.nat"
+    -- LAN mode is not set to NAT
+    if dmz_mode ~= "0" then
+        servfile = "/etc/config.mesh/_setup.services.dmz"
+    end
+    if nixio.fs.access(servfile) then
+        for line in io.lines(servfile)
+        do
+            local zone = line:match("^(.*)|.*|.*|.*|.*|meshchat$")
+            if zone then
+                return zone
+            end
         end
     end
     return "MeshChat"
@@ -220,5 +228,5 @@ function node_list()
 end
 
 function str_escape(str)
-	return str:gsub("%(", "%%("):gsub("%)", "%%)"):gsub("%%", "%%%%"):gsub("%.", "%%."):gsub("%+", "%%+"):gsub("-", "%%-"):gsub("%*", "%%*"):gsub("%[", "%%["):gsub("%?", "%%?"):gsub("%^", "%%^"):gsub("%$", "%%$")         
+	return str:gsub("%(", "%%("):gsub("%)", "%%)"):gsub("%%", "%%%%"):gsub("%.", "%%."):gsub("%+", "%%+"):gsub("-", "%%-"):gsub("%*", "%%*"):gsub("%[", "%%["):gsub("%?", "%%?"):gsub("%^", "%%^"):gsub("%$", "%%$")
 end
