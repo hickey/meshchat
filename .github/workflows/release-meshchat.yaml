@@ -10,26 +10,43 @@ jobs:
     runs-on: registry.gitlab.com/wt0f/gitlab-runner-images/node:latest
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: git config
+        run: |
+          git config user.name "${GITHUB_ACTOR}"
+          git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
       - run: npm install -g release-it @release-it/conventional-changelog @commitlint/config-conventional @commitlint/cli auto-changelog
       - run: npx release-it --ci
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: git checkout master
+      - run: git rebase release
+      - run: git push
+      - run: npx release-it --release-version > VERSION
+      - id: detect_version
+        run: echo "version=$(cat VERSION)" >> "${GITHUB_OUTPUT}"
+      - uses: action/upload-artifact@v3
+        with:
+          name: meshchat
+          path: |
+            VERSION
 
+  release_meshchat_package:
+    uses:
+      hickey/meshchat/.github/workflows/build-meshchat-pacakge.yaml@master
+    with:
+      version: ${{ steps.detect_version.outputs.version }}
+      build_dir: ${{ env.IPK_DIR }}
 
-  #     - uses: actions/upload-artifact@v3
-  #       with:
-  #         name: meshchat
-  #         path: |
-  #           VERSION
-
-  # create-meshchat-package:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #     - run: package/populate-meshchat-fs.sh $IPK_DIR
-  #     - run: package/update-version.sh $IPK_DIR
-  #     - run: package/ipk-build.sh $IPK_DIR
-  #     - uses: actions/upload-artifact@v3
-  #       with:
-  #         name: meshchat
-  #         path: |
-  #           meshchat_*.ipk
-  #           VERSION
+  add-meshchat-package-to-release:
+    runs-on: ubuntu-latest
+    container:
+      image: registry.gitlab.com/wt0f/gitlab-runner-images/node:latest
+    steps:
+      - run: npm install -g release-it @release-it/conventional-changelog @commitlint/config-conventional @commitlint/cli auto-changelog
+      - uses: actions/download-artifact@v3
+        with:
+          name: meshchat
+          path: ${{ needs.release_meshchat_package.outputs.package_file }}
+      - run: npx release-it --ci --no-increment --no-git --github.release=false --github.assets=*.dep --github.assets=*.ipk
