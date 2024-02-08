@@ -2,7 +2,7 @@ name: Build MeshChat Package
 on:
   workflow_call:
     inputs:
-      version:
+      build_version:
         required: true
         type: string
       build_dir:
@@ -12,23 +12,23 @@ on:
 jobs:
   create-meshchat-package:
     runs-on: ubuntu-latest
-    container:
-      image: registry.gitlab.com/wt0f/gitlab-runner-images/shell:latest
+    # container:
+    #   image: registry.gitlab.com/wt0f/gitlab-runner-images/shell:latest
     outputs:
       package_file: ${{ steps.detect-package-file.outputs.file }}
     steps:
-      - uses: actions/checkout@v3
-      - run: info "Populating the filesystem with MeshChat files"
+      - uses: actions/checkout@v4
+      # - run: info "Populating the filesystem with MeshChat files"
+      - run: echo ${{ inputs.build_version }} > VERSION
       - run: package/populate-meshchat-fs.sh ${{ inputs.build_dir }}
-      - run: info "Updating version numbers to "
+      # - run: info "Updating version numbers to "
       - run: package/update-version.sh ${{ inputs.build_dir }}
-      - run: info "Packing up MeshChat files"
+      # - run: info "Packing up MeshChat files"
       - run: package/ipk-build.sh ${{ inputs.build_dir }}
       - id: detect-package-file
-        run: echo "file=$(ls -1 meshchat_*.ipk)"
-      - uses: actions/upload-artifact@v3
+        run: echo "file=$(ls -1 meshchat_*.ipk)" >> $GITHUB_OUTPUT
+      - run: echo "${{ steps.detect-package-file.outputs.file }}"
+      - uses: actions/upload-artifact@v4
         with:
-          name: meshchat
-          path: |
-            meshchat_*.ipk
-            VERSION
+          name: ${{ steps.detect-package-file.outputs.file }}
+          path: ${{ steps.detect-package-file.outputs.file }}

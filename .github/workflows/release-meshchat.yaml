@@ -3,13 +3,19 @@ on:
     pull_request:
         types: [closed]
         branches: [release]
-env:
-  IPK_DIR: package/meshchat-ipkg
+    push:
+
 jobs:
   calculate-version-number:
-    runs-on: registry.gitlab.com/wt0f/gitlab-runner-images/node:latest
+    runs-on: ubuntu-latest
+    # container:
+    #   image: registry.gitlab.com/wt0f/gitlab-runner-images/node:latest
+    outputs:
+      build_version: ${{ steps.detect_version.outputs.build_version }}
+    env:
+      GITHUB_TOKEN: ${{ secrets.RELEASE_IT_TOKEN }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: git config
@@ -17,36 +23,40 @@ jobs:
           git config user.name "${GITHUB_ACTOR}"
           git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
       - run: npm install -g release-it @release-it/conventional-changelog @commitlint/config-conventional @commitlint/cli auto-changelog
-      - run: npx release-it --ci
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - run: git checkout master
-      - run: git rebase release
-      - run: git push
-      - run: npx release-it --release-version > VERSION
       - id: detect_version
-        run: echo "version=$(cat VERSION)" >> "${GITHUB_OUTPUT}"
-      - uses: action/upload-artifact@v3
-        with:
-          name: meshchat
-          path: |
-            VERSION
+        run: echo "build_version=$(npx release-it --release-version)" >> $GITHUB_OUTPUT
+      - run: npx release-it --ci
 
-  release_meshchat_package:
+      # - run: git checkout master
+      # - run: git rebase release
+      # - run: git push
+      # - uses: actions/upload-artifact@v4
+      #   with:
+      #     name: meshchat
+      #     path: VERSION
+
+  release-meshchat-package:
+    needs: calculate-version-number
     uses:
-      hickey/meshchat/.github/workflows/build-meshchat-pacakge.yaml@master
+      ./.github/workflows/build-meshchat-package.yaml
     with:
-      version: ${{ steps.detect_version.outputs.version }}
-      build_dir: ${{ env.IPK_DIR }}
+      build_version: ${{ needs.calculate-version-number.outputs.build_version }}
+      build_dir: package/meshchat-ipkg
 
   add-meshchat-package-to-release:
+    needs: release-meshchat-package
+    # container:
+    #   image: registry.gitlab.com/wt0f/gitlab-runner-images/node:latest
     runs-on: ubuntu-latest
-    container:
-      image: registry.gitlab.com/wt0f/gitlab-runner-images/node:latest
     steps:
-      - run: npm install -g release-it @release-it/conventional-changelog @commitlint/config-conventional @commitlint/cli auto-changelog
-      - uses: actions/download-artifact@v3
+      - uses: actions/checkout@v4
         with:
-          name: meshchat
+          fetch-depth: 0
+      - run: npm install -g release-it @release-it/conventional-changelog @commitlint/config-conventional @commitlint/cli auto-changelog
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.release_meshchat_package.outputs.package_file }}
           path: ${{ needs.release_meshchat_package.outputs.package_file }}
-      - run: npx release-it --ci --no-increment --no-git --github.release=false --github.assets=*.dep --github.assets=*.ipk
+      - run: npx release-it --ci --no-git --github.release=false --github.assets=*.dep --github.assets=*.ipk
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_IT_TOKEN }}
