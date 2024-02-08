@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 git:
   commit: true
   commitMessage: "chore(release): ${version}"
@@ -29,45 +28,5 @@ plugins:
           section: Features
         - type: fix
           section: Bug Fixes
-
-||||||| parent of 58e9870 (chore: create release CI job)
-=======
-git:
-  commit: true
-  commitMessage: "chore(release): ${version}"
-  commitArgs: ""
-  tag: true
-  tagName: "v${version}"
-  tagAnnotation: "Automated release: ${version}"
-  push: true
-  requireBranch: release
-  requireCommits: true
-  changelog: "npx auto-changelog --stdout --commit-limit false"
-
-github:
-  release: true
-  releaseName: "v${version}"
-  assets: ["*.ipk", "*.deb"]
-
-npm:
-  publish: false
-
-plugins:
-  "@release-it/conventional-changelog":
-    infile: CHANGELOG.md
-    preset:
-      name: conventionalcommits
-      types:
-        - type: feat
-          section: Features
-        - type: fix
-<<<<<<< HEAD
-          section: Bug Fixes
->>>>>>> 58e9870 (chore: create release CI job)
-||||||| parent of 516f180 (chore: add documentation section to changelog)
-          section: Bug Fixes
-=======
-          section: Bug Fixes
-        - type: docs
+        - tyep: docs
           section: Documentation
->>>>>>> 516f180 (chore: add documentation section to changelog)
