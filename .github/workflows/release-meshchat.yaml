@@ -6,7 +6,7 @@ on:
     push:
 
 jobs:
-  calculate-version-number:
+  create-release:
     runs-on: ubuntu-latest
     # container:
     #   image: registry.gitlab.com/wt0f/gitlab-runner-images/node:latest
@@ -25,26 +25,21 @@ jobs:
       - run: npm install -g release-it @release-it/conventional-changelog @commitlint/config-conventional @commitlint/cli auto-changelog
       - id: detect_version
         run: echo "build_version=$(npx release-it --release-version)" >> $GITHUB_OUTPUT
-      - run: npx release-it --ci
-
+      - run: npx release-it -VV --ci
       # - run: git checkout master
       # - run: git rebase release
       # - run: git push
-      # - uses: actions/upload-artifact@v4
-      #   with:
-      #     name: meshchat
-      #     path: VERSION
 
-  release-meshchat-package:
-    needs: calculate-version-number
+  build-meshchat-package:
+    needs: create-release
     uses:
       ./.github/workflows/build-meshchat-package.yaml
     with:
-      build_version: ${{ needs.calculate-version-number.outputs.build_version }}
+      build_version: ${{ needs.create-release.outputs.build_version }}
       build_dir: package/meshchat-ipkg
 
   add-meshchat-package-to-release:
-    needs: release-meshchat-package
+    needs: build-meshchat-package
     # container:
     #   image: registry.gitlab.com/wt0f/gitlab-runner-images/node:latest
     runs-on: ubuntu-latest
@@ -52,11 +47,17 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          fetch-tags: true
+      - run: git pull
       - run: npm install -g release-it @release-it/conventional-changelog @commitlint/config-conventional @commitlint/cli auto-changelog
       - uses: actions/download-artifact@v4
         with:
           name: ${{ needs.release_meshchat_package.outputs.package_file }}
           path: ${{ needs.release_meshchat_package.outputs.package_file }}
-      - run: npx release-it --ci --no-git --github.release=false --github.assets=*.dep --github.assets=*.ipk
+      - run: |
+          for file in *.ipk; do
+            echo "uploading $file"
+            npx release-it --ci --no-increment --no-git --no-npm --github.update=true --github.assets=$file
+          done
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_IT_TOKEN }}
