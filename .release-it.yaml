@@ -6,7 +6,7 @@ git:
   tagName: "v${version}"
   tagAnnotation: "Automated release: ${version}"
   push: true
-  requireBranch: release-job
+  requireBranch: release
   requireCommits: true
   changelog: "npx auto-changelog --stdout --commit-limit false"
 
