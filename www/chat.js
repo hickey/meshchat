@@ -1,19 +1,16 @@
 var meshchat_id;
 var last_messages_update = epoch();
-var call_sign = 'NOCALL';
-var meshchat_id;
-var peer;
-var mediaConnection;
-var enable_video = 0;
-var messages_updating = false;
-var users_updating = false;
-var messages = [];
-var channel_filter = '';
-var messages_version = 0;
-var alert = new Audio('alert.mp3');
-var message_db_version = 0;
-var pending_message_db_version = 0;
-var search_filter = '';
+var call_sign            = 'NOCALL';
+var enable_video         = 0;
+
+var messages         = new Messages();
+let alert            = new Audio('alert.mp3');
+
+let config = {};
+let context = {
+    config_loaded: false,
+    debug: true,            // let startup funcs show debug
+}
 
 $(function() {
     meshchat_init();
