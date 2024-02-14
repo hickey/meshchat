@@ -247,7 +247,7 @@ class Messages {
                 }
             }
 
-            if (channel == message.channel || this.__channel == '') {
+            if (channel == message.channel || this.__current_channel == '') {
                 html += this.render_row(message);
             }
         }
