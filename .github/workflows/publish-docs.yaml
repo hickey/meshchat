@@ -14,7 +14,23 @@ jobs:
           chmod -c -R +rX "_site/" | while read line; do
             echo "::warning title=Invalid file permissions automatically fixed::$line"
           done
-      - uses: actions/upload-pages-artifact@v3
+      - name: Archive artifact
+        run: |
+          echo ::group::Archive artifact
+          tar -C "_site" \
+              -cvf "$RUNNER_TEMP/artifact.tar" \
+              --exclude=.git \
+              --exclude=.github \
+              .
+          echo ::endgroup::
+      - name: Upload artifact
+        id: upload-artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: github-pages
+          path: ${{ runner.temp }}/artifact.tar
+          retention-days: 1
+          if-no-files-found: error
 
   # Deploy job
   deploy:
