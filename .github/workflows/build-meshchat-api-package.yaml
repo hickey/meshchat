@@ -8,6 +8,11 @@ on:
       build_dir:
         required: true
         type: string
+      ref:
+        required: false
+        type: string
+        default: $GITHUB_REF_NAME
+
 
 jobs:
   create-meshchat-api-package:
@@ -16,6 +21,9 @@ jobs:
     #   image: registry.gitlab.com/wt0f/gitlab-runner-images/shell:latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.ref }}
       - run: echo ${{ inputs.build_version }} > VERSION
       - run: package/populate-meshchat-api-fs.sh ${{ inputs.build_dir }}
       - run: package/update-version.sh ${{ inputs.build_dir }}

@@ -8,6 +8,10 @@ on:
       build_dir:
         required: true
         type: string
+      ref:
+        required: false
+        type: string
+        default: $GITHUB_REF_NAME
 
 jobs:
   create-meshchat-package:
@@ -18,6 +22,9 @@ jobs:
       package_file: ${{ steps.detect-package-file.outputs.file }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.ref }}
       # - run: info "Populating the filesystem with MeshChat files"
       - run: echo ${{ inputs.build_version }} > VERSION
       - run: package/populate-meshchat-fs.sh ${{ inputs.build_dir }}
