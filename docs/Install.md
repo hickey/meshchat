@@ -4,7 +4,7 @@ MeshChat is distributed as an Itsy package (IPK file) to be installed on an
 AREDN node. This is the simplest way to install MeshChat.
 
 Simply download the MeshChat package to your compute and then access the
-Adminstration panel in the AREDN's node setup. Under Package Management
+Administration panel in the AREDN's node setup. Under Package Management
 you will have the option to upload a package. Once uploaded the MeshChat
 system will be started within a couple of seconds.
 
