@@ -11,7 +11,7 @@ on:
       ref:
         required: false
         type: string
-        default: $GITHUB_REF_NAME
+        default: ${{ github.ref_name }}
 
 jobs:
   create-meshchat-package:
