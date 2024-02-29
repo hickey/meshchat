@@ -139,14 +139,6 @@ class Messages {
         console.debug("Messages.set_channel(chan=" + chan + ")");
         this.__current_channel = chan;
         this._message_checksum = null;
-        // // need to recalculate the message checksum
-        // let message_checksum = 0;
-        // for (var id of this.message_order) {
-        //     let message = this.messages.get(id);
-        //     if (message.channel == chan) {
-        //         message_checksum += parseInt(message.id, 16);
-        //     }
-        // }
     }
 
     current_channel() {

@@ -97,6 +97,8 @@ function start_chat() {
             default_channel = data.default_channel;
             $('#send-channel').val(data.default_channel);
             $('#channels').val(data.default_channel);
+            messages.set_channel(data.default_channel);
+            update_messages();
         }
 
         if ("debug" in data) {
@@ -111,7 +113,6 @@ function start_chat() {
     messages.subscribe(update_messages);
     messages.subscribe(new_messages);
     messages.subscribe(update_channels);
-    messages.set_channel(config['default_channel']);
     messages.check();
     load_users();
     monitor_last_update();
