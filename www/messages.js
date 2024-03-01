@@ -15,7 +15,7 @@ class Messages {
             this.db_version        = 0;
             this.last_update_time  = 0;
             this._updating         = false;
-            this._message_checksum = null;
+            this._message_checksum = null;       // only messages in channel
 
             this.__current_channel = "";
             this.__channels        = new Array();
@@ -34,6 +34,10 @@ class Messages {
         return this.__instance;
     }
 
+    /* check() retrieves the current message database version from the
+       MeshChat server and compares it with the last known version.
+       If the database version is different (i.e. database has new messages),
+       then an update cycle is kicked off by calling fetch() */
     check() {
         console.debug("Messages.check()");
 
@@ -63,6 +67,10 @@ class Messages {
             });
     }
 
+    /* fetch() is used to retrieve the messages from the message database.
+       It is told the new database version with the pending_version param.
+       All messages are then stored in the local message db (this.messages)
+       and update() is called to update all the internal counters */
     fetch(pending_version) {
         console.debug("Messages.fetch(pending_version = " + pending_version + ")");
 
@@ -114,6 +122,7 @@ class Messages {
                 this.__channels.push(message.channel);
             }
 
+            // TODO not sure this is actually needed, get should be returning a reference
             this.messages.set(id, message);
         }
 
@@ -129,6 +138,7 @@ class Messages {
     set_channel(chan) {
         console.debug("Messages.set_channel(chan=" + chan + ")");
         this.__current_channel = chan;
+        this._message_checksum = null;
     }
 
     current_channel() {
@@ -203,7 +213,6 @@ class Messages {
         console.debug("Messages.render(channel=" + channel + ", search_filter=" + search_filter + ")");
         let html = '';
         let search = search_filter.toLowerCase();
-        // compare with last time render was called to detect new messages
         let message_checksum = 0;
 
         for (var id of this.message_order) {
@@ -225,24 +234,26 @@ class Messages {
                 }
             }
 
-            if (channel == message.channel || this.__channel == '') {
-                message_checksum += parseInt(id, 16);
+            if (channel == message.channel || this.__current_channel == '') {
                 html += this.render_row(message);
+
+                // add this message to the checksum
+                message_checksum += parseInt(message.id, 16);
             }
         }
-
-        // this._message_checksum == null is the first rendering of the
-        // message table. No need to sound an alert.
-        if (this._message_checksum != null && message_checksum != this._message_checksum) {
-            // reset internal message checksum and notify of new messages
-            this.notify(Messages.NEW_MSG);
-        }
-        this._message_checksum = message_checksum;
 
         // provide a message if no messages were found
         if (html == "") {
             html = "<tr><td>No messages found</td></tr>";
         }
+
+        // this._message_checksum == null is the first rendering of the
+        // message table. No need to sound an alert.
+        if (this._message_checksum != null && message_checksum != this._message_checksum) {
+            this.notify(Messages.NEW_MSG);
+        }
+        this._message_checksum = message_checksum;
+
         return html;
     }
 

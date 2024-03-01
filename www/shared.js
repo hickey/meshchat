@@ -70,3 +70,7 @@ function aredn_domain(host) {
     host = host.split(":")
     return host[0] + ".local.mesh" + (host[1] ? ":" + host[1] : "");
 }
+
+function debug(msg) {
+    context.debug && console.debug(msg);
+}

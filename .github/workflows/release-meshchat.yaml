@@ -30,7 +30,7 @@ jobs:
   build-meshchat-package:
     needs: create-release
     uses:
-      ./.github/workflows/build-meshchat-package.yaml
+      ./.github/workflows/workflow-meshchat-package.yaml
     with:
       ref: release
       build_version: ${{ needs.create-release.outputs.build_version }}
@@ -39,7 +39,7 @@ jobs:
   build-meshchat-api-package:
     needs: create-release
     uses:
-      ./.github/workflows/build-meshchat-api-package.yaml
+      ./.github/workflows/workflow-meshchat-api-package.yaml
     with:
       build_version: ${{ needs.create-release.outputs.build_version }}
       build_dir: package/meshchat-ipkg

@@ -11,8 +11,7 @@ on:
       ref:
         required: false
         type: string
-        default: $GITHUB_REF_NAME
-
+        default: ${{ github.ref_name }}
 
 jobs:
   create-meshchat-api-package:
@@ -29,7 +28,7 @@ jobs:
       - run: package/update-version.sh ${{ inputs.build_dir }}
       - run: package/ipk-build.sh ${{ inputs.build_dir }}
       - id: detect-package-file
-        run: echo "file=$(ls -1 meshchat_*.ipk)" >> $GITHUB_OUTPUT
+        run: echo "file=$(ls -1 meshchat-api_*.ipk)" >> $GITHUB_OUTPUT
       - run: echo "${{ steps.detect-package-file.outputs.file }}"
       - uses: actions/upload-artifact@v4
         with:
