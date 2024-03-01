@@ -23,9 +23,9 @@ jobs:
       - id: detect_version
         run: echo "build_version=$(npx release-it --release-version)" >> $GITHUB_OUTPUT
       - run: npx release-it -VV --ci
-      - run: git checkout master
-      - run: git rebase release
-      - run: git push
+      # - run: git checkout master
+      # - run: git rebase release
+      # - run: git push
 
   build-meshchat-package:
     needs: create-release
