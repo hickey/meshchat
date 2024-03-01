@@ -1,0 +1,64 @@
+name: Publish MeshChat Documentation
+on:
+  workflow_call:
+    inputs:
+      build_version:
+        required: true
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: jtackaberry/luadox:latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: release
+      - run: luadox -c luadox.conf
+      - name: Fix permissions
+        run: |
+          chmod -c -R +rX "_site/" | while read line; do
+            echo "::warning title=Invalid file permissions automatically fixed::$line"
+          done
+      - name: Update version strings
+        run: |
+          find docs -type f --exec sed -i "s/%VERSION%/${{ inputs.build_version }}/" {} \;
+        run: |
+          echo ::group::Archive artifact
+          tar -C "_site" \
+              -cvf "$RUNNER_TEMP/artifact.tar" \
+              --exclude=.git \
+              --exclude=.github \
+              .
+          echo ::endgroup::
+      - name: Upload artifact
+        id: upload-artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: github-pages
+          path: ${{ runner.temp }}/artifact.tar
+          retention-days: 1
+          if-no-files-found: error
+
+  # Deploy job
+  deploy:
+    needs: build
+
+    # Grant GITHUB_TOKEN the permissions required to make a Pages deployment
+    permissions:
+      pages: write      # to deploy to Pages
+      id-token: write   # to verify the deployment originates from an appropriate source
+
+    # Deploy to the github-pages environment
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    # Specify runner + deployment step
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4 # or specific "vX.X.X" version tag for this action

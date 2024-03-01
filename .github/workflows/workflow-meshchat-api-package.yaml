@@ -1,0 +1,36 @@
+name: Build MeshChat API Package
+on:
+  workflow_call:
+    inputs:
+      build_version:
+        required: true
+        type: string
+      build_dir:
+        required: true
+        type: string
+      ref:
+        required: false
+        type: string
+        default: ${{ github.ref_name }}
+
+jobs:
+  create-meshchat-api-package:
+    runs-on: ubuntu-latest
+    # container:
+    #   image: registry.gitlab.com/wt0f/gitlab-runner-images/shell:latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.ref }}
+      - run: echo ${{ inputs.build_version }} > VERSION
+      - run: package/populate-meshchat-api-fs.sh ${{ inputs.build_dir }}
+      - run: package/update-version.sh ${{ inputs.build_dir }}
+      - run: package/ipk-build.sh ${{ inputs.build_dir }}
+      - id: detect-package-file
+        run: echo "file=$(ls -1 meshchat-api_*.ipk)" >> $GITHUB_OUTPUT
+      - run: echo "${{ steps.detect-package-file.outputs.file }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.detect-package-file.outputs.file }}
+          path: ${{ steps.detect-package-file.outputs.file }}

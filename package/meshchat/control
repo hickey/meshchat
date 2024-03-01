@@ -1,8 +1,8 @@
-Package: meshchat-api
-Version: 2.9
-Depends:
+Package: meshchat
+Version:
+Depends: curl lua
 Provides:
-Source: package/meshchat-api
+Source: package/meshchat
 Section: net
 Priority: optional
 Maintainer: Tim Wilkinson (KN6PLV) and Trevor Paskett (K7FPV)
