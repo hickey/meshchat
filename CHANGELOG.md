@@ -1,5 +1,12 @@
 
 
+## [2.11.1](https://github.com/hickey/meshchat/compare/v2.11.0...v2.11.1) (2024-03-02)
+
+
+### Bug Fixes
+
+* remove duplicate config definitions ([#46](https://github.com/hickey/meshchat/issues/46)) ([a6cb468](https://github.com/hickey/meshchat/commit/a6cb468ca0fa594629a1bae0e22781dfc0bf074e))
+
 ## [2.11.0](https://github.com/hickey/meshchat/compare/v2.10.0...v2.11.0) (2024-03-01)
 
 
