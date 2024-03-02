@@ -1,5 +1,13 @@
 
 
+## [2.11.2](https://github.com/hickey/meshchat/compare/v2.11.1...v2.11.2) (2024-03-02)
+
+
+### Bug Fixes
+
+* recover code lost from bad merges ([05c8dff](https://github.com/hickey/meshchat/commit/05c8dff7192941651145a4423916de46797adf3e))
+* remove duplicate config definitions ([53dd0c6](https://github.com/hickey/meshchat/commit/53dd0c6785167537430e592e0d6d895499ac3ce7))
+
 ## [2.11.1](https://github.com/hickey/meshchat/compare/v2.11.0...v2.11.1) (2024-03-02)
 
 
