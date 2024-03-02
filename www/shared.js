@@ -6,17 +6,6 @@ $(function() {
         Cookies.remove('meshchat_call_sign');
         window.location = '/meshchat';
     });
-
-    $.getJSON('/cgi-bin/meshchat?action=config', function(data) {
-        config = data;
-
-        document.title = 'Mesh Chat v' + data.version;
-        $('#version').html('<strong>Mesh Chat v' + data.version + '</strong>');
-        $('#node').html('<strong>Node:</strong> ' + data.node);
-        $('#zone').html('<strong>Zone:</strong> ' + data.zone);
-        $('#callsign').html('<strong>Call Sign:</strong> ' + Cookies.get('meshchat_call_sign'));
-        $('#copyright').html('Mesh Chat v' + data.version + ' Copyright &copy; ' + new Date().getFullYear() + ' <a href="http://www.trevorsbench.com">Trevor Paskett - K7FPV</a> <small>(Lua by KN6PLV)</small>');
-    });
 });
 
 function node_name() {
@@ -73,4 +62,8 @@ function aredn_domain(host) {
 
 function debug(msg) {
     context.debug && console.debug(msg);
+}
+
+function error(msg) {
+    console.error(msg);
 }

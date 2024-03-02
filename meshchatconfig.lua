@@ -76,4 +76,4 @@ extra_nodes                = {}
 -- @type string
 protocol_version           = "1.02"
 app_version                = "master"
-default_channel            = "chat"
+default_channel            = ""

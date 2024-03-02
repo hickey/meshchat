@@ -83,30 +83,37 @@ function start_chat() {
     debug("start_chat()");
 
     // wait until the configuration is fully loaded
-    load_config().then(function(data) {
-        config = data;
-        document.title = 'Mesh Chat v' + data.version;
-        $('#version').html('<strong>Mesh Chat v' + data.version + '</strong>');
-        $('#node').html('<strong>Node:</strong> ' + data.node);
-        $('#zone').html('<strong>Zone:</strong> ' + data.zone);
-        $('#callsign').html('<strong>Call Sign:</strong> ' + Cookies.get('meshchat_call_sign'));
-        $('#copyright').html('Mesh Chat v' + data.version + ' Copyright &copy; ' + new Date().getFullYear() + ' <a href="http://www.trevorsbench.com">Trevor Paskett - K7FPV</a> <small>(Lua by KN6PLV)</small>');
+    $.getJSON('/cgi-bin/meshchat?action=config',
+        (data) => {
+            config = data;
+            document.title = 'Mesh Chat v' + data.version;
+            $('#version').html('<strong>Mesh Chat v' + data.version + '</strong>');
+            $('#node').html('<strong>Node:</strong> ' + data.node);
+            $('#zone').html('<strong>Zone:</strong> ' + data.zone);
+            $('#callsign').html('<strong>Call Sign:</strong> ' + Cookies.get('meshchat_call_sign'));
+            $('#copyright').html('Mesh Chat v' + data.version + ' Copyright &copy; ' + new Date().getFullYear() + ' <a href="http://www.trevorsbench.com">Trevor Paskett - K7FPV</a> <small>(Lua by KN6PLV)</small>');
 
-        if ("default_channel" in data) {
-            default_channel = data.default_channel;
-            $('#send-channel').val(data.default_channel);
-            $('#channels').val(data.default_channel);
-            messages.set_channel(data.default_channel);
-            update_messages();
+            if ("default_channel" in data) {
+                default_channel = data.default_channel;
+                $('#send-channel').val(data.default_channel);
+                $('#channels').val(data.default_channel);
+                messages.set_channel(data.default_channel);
+                update_messages();
+            }
+
+            if ("debug" in data) {
+                context.debug = data.debug == 1 ? true : false;
+            }
+
+            // signal that the config has finished loading
+            context.config_loaded = true;
         }
-
-        if ("debug" in data) {
-            context.debug = data.debug == 1 ? true : false;
+    ).fail(
+        (error) => {
+            // TODO error message on UI describing failure
+            error("Failed to load configuration from config API: " + error);
         }
-
-        // signal that the config has finished loading
-        context.config_loaded = true;
-    })
+    );
 
     //$('#logout').html('Logout ' + call_sign);
     messages.subscribe(update_messages);
