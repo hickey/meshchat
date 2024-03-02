@@ -6,7 +6,6 @@ var enable_video         = 0;
 var messages         = new Messages();
 let alert            = new Audio('alert.mp3');
 
-let config = {};
 let context = {
     config_loaded: false,
     debug: true,            // let startup funcs show debug
