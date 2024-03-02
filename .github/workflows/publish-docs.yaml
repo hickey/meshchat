@@ -24,8 +24,8 @@ jobs:
           done
       - name: Update version strings
         run: |
-          find docs -type f --exec sed -i "s/%VERSION%/${{ inputs.build_version }}/" {} \;
-        run: |
+          find docs -type f -exec sed -i "s/%VERSION%/${{ inputs.build_version }}/" {} \;
+      - run: |
           echo ::group::Archive artifact
           tar -C "_site" \
               -cvf "$RUNNER_TEMP/artifact.tar" \
