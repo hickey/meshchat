@@ -71,14 +71,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.RELEASE_IT_TOKEN }}
 
   update-documentation:
-    runs-on: ubuntu-latest
     needs: create-release
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          fetch-tags: true
-      - uses:
-          ./.github/workflows/publish-docs.yaml
-        with:
-          build_version: ${{ needs.create-release.outputs.build_version }}
+    uses:
+      ./.github/workflows/publish-docs.yaml
+    with:
+      build_version: ${{ needs.create-release.outputs.build_version }}
