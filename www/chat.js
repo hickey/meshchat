@@ -22,7 +22,12 @@ function monitor_last_update() {
 
 function update_messages(reason=Messages.MSG_UPDATE) {
     if (reason != Messages.MSG_UPDATE) return;
-    let caller = (new Error()).stack.split("\n")[3].split("/")[0];
+    try {
+        var caller = (new Error()).stack.split("\n")[3].split("/")[0];
+    }
+    catch (TypeError) {
+        var caller = "unknown_caller";
+    }
     console.debug(caller + "->update_messages(reason=MSG_UPDATE)");
 
     // update the message table
@@ -33,14 +38,24 @@ function update_messages(reason=Messages.MSG_UPDATE) {
 
 function new_messages(reason) {
     if (reason != Messages.NEW_MSG) return;
-    let caller = (new Error()).stack.split("\n")[3].split("/")[0];
+    try {
+        var caller = (new Error()).stack.split("\n")[3].split("/")[0];
+    }
+    catch (TypeError) {
+        var caller = "unknown_caller";
+    }
     console.debug(caller + "->new_messages(reason=NEW_MSG)");
     alert.play();
 }
 
 function update_channels(reason) {
     if (reason != Messages.CHAN_UPDATE) return;
-    let caller = (new Error()).stack.split("\n")[3].split("/")[0];
+    try {
+        var caller = (new Error()).stack.split("\n")[3].split("/")[0];
+    }
+    catch (TypeError) {
+        var caller = "unknown_caller";
+    }
     console.debug(caller + "->update_channels(reason=CHAN_UPDATE)");
 
     let msg_refresh      = false;
