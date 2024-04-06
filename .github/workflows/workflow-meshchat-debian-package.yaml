@@ -32,7 +32,7 @@ jobs:
       - run: package/update-version.sh ${{ inputs.build_dir }}
       # - run: info "Packing up MeshChat files"
       - run: dpkg-deb --root-owner-group --build ${{ inputs.build_dir }}
-      - run: mv meshchat-deb.deb meshchat_${{ inputs.build_version }}_all.deb
+      - run: mv package/meshchat-deb.deb meshchat_${{ inputs.build_version }}_all.deb
       - id: detect-package-file
         run: echo "file=meshchat_${{inputs.build_version }}_all.deb" >> $GITHUB_OUTPUT
       - run: echo "${{ steps.detect-package-file.outputs.file }}"
