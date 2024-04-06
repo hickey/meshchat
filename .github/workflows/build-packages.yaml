@@ -19,18 +19,18 @@ jobs:
 
           echo "build_version=$version" >> $GITHUB_OUTPUT
 
-  build-meshchat-package:
+  build-meshchat-openwrt-package:
     needs: calculate-version
     uses:
-      ./.github/workflows/workflow-meshchat-package.yaml
+      ./.github/workflows/workflow-meshchat-openwrt-package.yaml
     with:
       build_version: ${{ needs.calculate-version.outputs.build_version }}
       build_dir: package/meshchat-ipkg
 
-  build-meshchat-api-package:
+  build-meshchat-debian-package:
     needs: calculate-version
     uses:
-      ./.github/workflows/workflow-meshchat-api-package.yaml
+      ./.github/workflows/workflow-meshchat-debian-package.yaml
     with:
       build_version: ${{ needs.calculate-version.outputs.build_version }}
-      build_dir: package/meshchat-ipkg
+      build_dir: package/meshchat-deb

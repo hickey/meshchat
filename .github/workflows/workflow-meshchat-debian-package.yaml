@@ -14,7 +14,7 @@ on:
         default: ${{ github.ref_name }}
 
 jobs:
-  create-meshchat-package:
+  create-meshchat-debian-package:
     runs-on: ubuntu-latest
     # container:
     #   image: registry.gitlab.com/wt0f/gitlab-runner-images/shell:latest
@@ -27,13 +27,14 @@ jobs:
           ref: ${{ inputs.ref }}
       # - run: info "Populating the filesystem with MeshChat files"
       - run: echo ${{ inputs.build_version }} > VERSION
-      - run: package/populate-meshchat-fs.sh ${{ inputs.build_dir }}
+      - run: package/populate-meshchat-fs.sh ${{ inputs.build_dir }} debian
       # - run: info "Updating version numbers to "
       - run: package/update-version.sh ${{ inputs.build_dir }}
       # - run: info "Packing up MeshChat files"
-      - run: package/ipk-build.sh ${{ inputs.build_dir }}
+      - run: dpkg-deb --root-owner-group --build ${{ inputs.build_dir }}
+      - run: mv meshchat-deb.deb meshchat_${{ inputs.build_version }}_all.deb
       - id: detect-package-file
-        run: echo "file=$(ls -1 meshchat_*.ipk)" >> $GITHUB_OUTPUT
+        run: echo "file=meshchat_${{inputs.build_version }}_all.deb" >> $GITHUB_OUTPUT
       - run: echo "${{ steps.detect-package-file.outputs.file }}"
       - uses: actions/upload-artifact@v4
         with:
