@@ -110,7 +110,7 @@ function load_files() {
                     port = ':8080'
                 }
             }
-            html += '<td><a href="/cgi-bin/meshchat?action=file_download&file=' + encodeURIComponent(data.files[i].file) + '" target="_blank">' + data.files[i].file +
+            html += '<td><a href="/cgi-bin/meshchat?action=file_download&file=' + encodeURIComponent(data.files[i].file) + '" target="_blank">' + data.files[i].file + '</a></td>';
             html += '<td>' + numeral(data.files[i].size).format('0.0 b') + '</td>';
             html += '<td class="col_node">' + data.files[i].node + '</td>';
             html += '<td class="col_time">' + format_date(date) + '</td>';
