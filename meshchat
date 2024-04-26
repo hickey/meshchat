@@ -538,8 +538,22 @@ function file_download()
     release_lock()
 
     print("Content-MD5: " .. md5 .. "\r")
-    print("Content-Disposition: attachment; filename=\"" .. file .. "\";\r")
-    print("Content-type: application/octet-stream\r")
+
+    local ext = string.match(file, "%.(%a+)$")
+    local content_type
+
+    if ext == "jpg" or ext == "jpeg" then
+        content_type = "image/jpeg"
+    elseif ext == "png" then
+        content_type = "image/png"
+    elseif ext == "gif" then
+        content_type = "image/gif"
+    else
+        print("Content-Disposition: attachment; filename=\"" .. file .. "\";\r")
+        content_type = "application/octet-stream"
+    end
+
+    print("Content-Type: " .. content_type .. "\r")
     print("\r")
 
     if f then
