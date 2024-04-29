@@ -542,12 +542,26 @@ function file_download()
     local ext = string.match(file, "%.(%a+)$")
     local content_type
 
-    if ext == "jpg" or ext == "jpeg" then
+    if ext == "jpe" or ext == "jpg" or ext == "jpeg" then
         content_type = "image/jpeg"
     elseif ext == "png" then
         content_type = "image/png"
     elseif ext == "gif" then
         content_type = "image/gif"
+    elseif ext == "webp" then
+        content_type = "image/webp"
+    elseif ext == "bmp" then
+        content_type = "image/bmp"
+    elseif ext == "tiff" or ext == "tif" then
+        content_type = "image/tiff"
+    elseif ext == "ico" then
+        content_type = "image/x-icon"
+    elseif ext == "svg" or ext == "svgz" then
+        content_type = "image/svg+xml"
+    elseif ext == "avif" then
+        content_type = "image/avif"
+    elseif ext == "heic" or ext == "heif" then
+        content_type = "image/heic"
     else
         print("Content-Disposition: attachment; filename=\"" .. file .. "\";\r")
         content_type = "application/octet-stream"
