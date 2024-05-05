@@ -37,26 +37,29 @@
 
 package.path = package.path .. ";/www/cgi-bin/?.lua"
 
-require('luci.http')
-require("meshchatconfig")
 local json = require("json")
 local lib = require("meshchatlib")
+local url = require("net/url")
+require("meshchatconfig")
 
 ---
 -- @module meshchat
 
 local query = {}
 local uploadfilename
-if os.getenv("QUERY_STRING") ~= "" or os.getenv("REQUEST_METHOD") == "POST" then
-    local request = luci.http.Request(lib.getenv(),
-    function()
-        local v = io.read(1024)
-        if not v then
-            io.close()
-        end
-            return v
-        end
-    )
+
+if os.getenv("QUERY_STRING") ~= "" then
+    -- Process a GET request
+    query = url.parseQuery(os.getenv("QUERY_STRING"))
+elseif os.getenv("REQUEST_METHOD") == "POST" then
+    -- Process a POST request
+    local request = ''
+    while v = io.read(1024) do
+        request = request .. v
+    end
+
+    query = url.parseQuery(request)
+
     local fp
     request:setfilehandler(
         function(meta, chunk, eof)
