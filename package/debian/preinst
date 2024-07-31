@@ -2,17 +2,17 @@
 
 /etc/init.d/meshchatsync stop > /dev/null 2> /dev/null
 
-mkdir -p /www/meshchat
+mkdir -p /var/www/html/meshchat
 
 # if there is not a meshchat_local.lua, then prepare one
-if [ ! -f /www/cgi-bin/meshchat_local.lua ]; then
-    if [ -f /www/cgi-bin/meshchatconfig.lua ]; then
-        cp /www/cgi-bin/meshchatconfig.lua /www/cgi-bin/meshchat_local.lua
+if [ ! -f /usr/lib/cgi-bin/meshchat_local.lua ]; then
+    if [ -f /usr/lib/cgi-bin/meshchatconfig.lua ]; then
+        cp /usr/lib/cgi-bin/meshchatconfig.lua /usr/lib/cgi-bin/meshchat_local.lua
 
         # remove vars that should not be in meshchat_local.lua
-        sed -i "/^protocol_version/d; /^app_version/d" /www/cgi-bin/meshchat_local.lua
+        sed -i "/^protocol_version/d; /^app_version/d" /usr/lib/cgi-bin/meshchat_local.lua
     else
-        touch /www/cgi-bin/meshchat_local.lua
+        touch /usr/lib/cgi-bin/meshchat_local.lua
     fi
 fi
 

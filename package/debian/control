@@ -1,6 +1,6 @@
 Package: meshchat
 Version:
-Depends: lua5.4
+Depends: lua5.4, nginx
 Provides:
 Source: package/meshchat
 Section: net
