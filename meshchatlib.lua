@@ -89,7 +89,10 @@ function zone_name()
     if nixio.fs.access(servfile) then
         for line in io.lines(servfile)
         do
-            local zone = line:match("^(.*)|.*|.*|.*|.*|meshchat$")
+            -- this will match the new service names with the icon metadata
+            -- in this case we are using a space or a pipe to terminate
+            -- the service name
+            local zone = line:match("^(.-)[%s%|].*|meshchat$")
             if zone then
                 return zone
             end
