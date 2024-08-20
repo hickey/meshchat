@@ -1,5 +1,30 @@
 
 
+## [2.12.1](https://github.com/hickey/meshchat/compare/v2.12.0...v2.12.1) (2024-08-20)
+
+
+### Bug Fixes
+
+* Update zone name discovery to ignore icon metadata ([#52](https://github.com/hickey/meshchat/issues/52)) ([5c3f03a](https://github.com/hickey/meshchat/commit/5c3f03a31ad0d7b96f9e01d9785a7ebef2bd64f2))
+
+## [2.12.0](https://github.com/hickey/meshchat/compare/v2.11.2...v2.12.0) (2024-03-03)
+
+
+### Features
+
+* add message class abstracting message handling ([#23](https://github.com/hickey/meshchat/issues/23)) ([28d1759](https://github.com/hickey/meshchat/commit/28d17592f7ee1a778fdd0bc740f451646493f9dd))
+* Add support for meshchat_local.lua ([#47](https://github.com/hickey/meshchat/issues/47)) ([b51bb16](https://github.com/hickey/meshchat/commit/b51bb16baa0abf7f72a895471712e0bdb6d7a44d))
+* allow admin to set default channel ([#19](https://github.com/hickey/meshchat/issues/19)) ([d90fc33](https://github.com/hickey/meshchat/commit/d90fc33eafecd31fec2dc825d8388f8e98ae8fd0))
+* Set send channel when channel filter changed ([f26130b](https://github.com/hickey/meshchat/commit/f26130ba5f06f9b4fbd26257be8d967a61e531bc))
+
+
+### Bug Fixes
+
+* recover code lost from bad merges ([9ad1637](https://github.com/hickey/meshchat/commit/9ad163784ba66b1b42ec0b695a37104c3d8a348d))
+* remove duplicate config definitions ([57d2766](https://github.com/hickey/meshchat/commit/57d2766d1bece87138ff4b76053e3316955454a0))
+* Set caller to unknown_caller for notified functions ([7856502](https://github.com/hickey/meshchat/commit/78565026aae76dee20751e483f38f0bc7bfb94ad))
+* set epoch in send_message API even if not specified ([bfadccb](https://github.com/hickey/meshchat/commit/bfadccb3f8010c51374e206d78585b22ac86848a))
+
 ## [2.11.2](https://github.com/hickey/meshchat/compare/v2.11.1...v2.11.2) (2024-03-02)
 
 
