@@ -1,5 +1,12 @@
 
 
+## [2.12.1](https://github.com/hickey/meshchat/compare/v2.12.0...v2.12.1) (2024-08-20)
+
+
+### Bug Fixes
+
+* Update zone name discovery to ignore icon metadata ([#52](https://github.com/hickey/meshchat/issues/52)) ([5c3f03a](https://github.com/hickey/meshchat/commit/5c3f03a31ad0d7b96f9e01d9785a7ebef2bd64f2))
+
 ## [2.12.0](https://github.com/hickey/meshchat/compare/v2.11.2...v2.12.0) (2024-03-03)
 
 
