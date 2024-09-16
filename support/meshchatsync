@@ -36,42 +36,41 @@
 --]]
 
 package.path = package.path .. ";/www/cgi-bin/?.lua"
-require("nixio")
 require("meshchatconfig")
-require("meshchatlib")
+local lib = require("meshchatlib")
 
 local sync_status = {}
 local non_mesh_chat_nodes = {}
 
-local node = node_name()
+local node = lib.node_name()
 
-if not nixio.fs.stat(meshchat_path) then
-    nixio.fs.mkdir(meshchat_path)
-    nixio.fs.mkdir(local_files_dir)
+if not lib.file_exists(meshchat_path) then
+    lib.mkdir(meshchat_path)
+    lib.mkdir(local_files_dir)
 end
 
-if not nixio.fs.stat(messages_db_file) then
+if not lib.file_exists(messages_db_file) then
     io.open(messages_db_file, "w"):close()
-    nixio.fs.chmod(messages_db_file, "666")
+    lib.chmod(messages_db_file, "666")
 end
 
 io.open(local_users_status_file, "a"):close()
 io.open(remote_users_status_file, "a"):close()
 
-save_messages_db_version()
+lib.save_messages_db_version()
 
-nixio.fs.chmod(meshchat_path, "666")
+lib.chmod(meshchat_path, "666")
 
 io.open(lock_file, "a"):close()
 
 function log_status()
     local cur_status = {}
 
-    if not nixio.fs.stat(sync_status_file) then
+    if not lib.file_exists(sync_status_file) then
         io.open(sync_status_file, "w"):close()
     end
 
-    get_lock()
+    lib.get_lock()
 
     for line in io.lines(sync_status_file)
     do
@@ -94,7 +93,7 @@ function log_status()
         f:close()
     end
 
-    release_lock()
+    lib.release_lock()
 end
 
 function merge_messages()
@@ -107,7 +106,7 @@ function merge_messages()
         rmsg[key] = line
     end
 
-    get_lock()
+    lib.get_lock()
 
     for line in io.lines(messages_db_file)
     do
@@ -126,11 +125,11 @@ function merge_messages()
         f:close()
     end
 
-    sort_and_trim_db()
+    lib.sort_and_trim_db()
 
-    save_messages_db_version()
+    lib.save_messages_db_version()
 
-    release_lock()
+    lib.release_lock()
 end
 
 function merge_users()
@@ -145,7 +144,7 @@ function merge_users()
         end
     end
 
-    get_lock()
+    lib.get_lock()
 
     for line in io.lines(remote_users_status_file)
     do
@@ -174,12 +173,12 @@ function merge_users()
         f:close()
     end
 
-    release_lock()
+    lib.release_lock()
 end
 
 while true
 do
-    local nodes = node_list()
+    local nodes = lib.node_list()
 
     sync_status = {}
 
@@ -200,14 +199,14 @@ do
                 port = ":8080"
             end
 
-            local version = get_messages_db_version()
+            local version = lib.get_messages_db_version()
 
             -- Poll non mesh chat nodes at a longer interval
             if non_mesh_chat_nodes[remote_node] and os.time() < non_mesh_chat_nodes[remote_node] then
                 break
             end
 
-            nixio.fs.remove(meshchat_path .. "/remote_users")
+            lib.unlink(meshchat_path .. "/remote_users")
 
             -- Get remote users file
             local f = io.popen("/usr/bin/curl --retry 0 --connect-timeout " .. connect_timeout .. " --speed-time " .. speed_time .. " --speed-limit " .. speed_limit .. " -sD - \"http://" .. remote_node .. port .. "/cgi-bin/meshchat?action=users_raw&platform=" .. platform .. "&node=" .. node .. "\" -o " .. meshchat_path .. "/remote_users 2>&1")
@@ -222,9 +221,9 @@ do
 
             local md5 = output:match("Content%-MD5:%s([0-9a-f]+)\r\n")
             if md5 then
-                local f_md5 = file_md5(meshchat_path .. "/remote_users")
+                local f_md5 = lib.file_md5(meshchat_path .. "/remote_users")
                 if md5 == f_md5 then
-                    local cur_size = nixio.fs.stat(meshchat_path .. "/remote_users").size
+                    local cur_size = lib.file_exists(meshchat_path .. "/remote_users").size
                     if cur_size > 0 then
                         merge_users()
                     end
@@ -232,25 +231,25 @@ do
             end
 
             -- Get remote files file
-            nixio.fs.remove(meshchat_path .. "/remote_files")
+            lib.unlink(meshchat_path .. "/remote_files")
             f = io.popen("/usr/bin/curl --retry 0 --connect-timeout " .. connect_timeout .. " --speed-time " .. speed_time .. " --speed-limit " .. speed_limit .. " -sD - \"http://" .. remote_node .. port .. "/cgi-bin/meshchat?action=local_files_raw\" -o " .. meshchat_path .. "/remote_files 2>&1")
             output = f:read("*a")
             f:close()
 
             md5 = output:match("Content%-MD5:%s([0-9a-f]+)\r\n")
             if md5 then
-                local f_md5 = file_md5(meshchat_path .. "/remote_files")
-                nixio.fs.remove(meshchat_path .. "/remote_files." .. remote_node)
+                local f_md5 = lib.file_md5(meshchat_path .. "/remote_files")
+                lib.unlink(meshchat_path .. "/remote_files." .. remote_node)
                 if md5 == f_md5 then
-                    local cur_size = nixio.fs.stat(meshchat_path .. "/remote_files").size
+                    local cur_size = lib.file_exists(meshchat_path .. "/remote_files").size
                     if cur_size > 0 then
-                        nixio.fs.rename(meshchat_path .. "/remote_files", meshchat_path .. "/remote_files." .. remote_node)
+                        lib.rename(meshchat_path .. "/remote_files", meshchat_path .. "/remote_files." .. remote_node)
                     end
                 end
             end
 
             -- Get remote messages
-            nixio.fs.remove(meshchat_path .. "/remote_messages")
+            lib.unlink(meshchat_path .. "/remote_messages")
 
             f = io.popen("/usr/bin/curl --retry 0 --connect-timeout " .. connect_timeout .. " --speed-time " .. speed_time .. " --speed-limit " .. speed_limit .. " \"http://" .. remote_node .. port .. "/cgi-bin/meshchat?action=messages_version\" -o - 2> /dev/null")
             local remote_version = f:read("*a")
@@ -267,12 +266,12 @@ do
             local output = f:read("*a")
             f:close()
 
-            if nixio.fs.stat(meshchat_path .. "/remote_messages") then
+            if lib.file_exists(meshchat_path .. "/remote_messages") then
                 local md5 = output:match("Content%-MD5:%s([0-9a-f]+)\r\n")
                 if md5 then
-                    local f_md5 = file_md5(meshchat_path .. "/remote_messages")
+                    local f_md5 = lib.file_md5(meshchat_path .. "/remote_messages")
                     if md5 == f_md5 then
-                        local cur_size = nixio.fs.stat(meshchat_path .. "/remote_messages").size
+                        local cur_size = lib.file_exists(meshchat_path .. "/remote_messages").size
                         if cur_size > 0 then
                             sync_status[remote_node] = os.time()
                             merge_messages()
@@ -285,9 +284,10 @@ do
 
     log_status()
 
-    nixio.fs.remove(meshchat_path .. "/remote_messages")
-    nixio.fs.remove(meshchat_path .. "/remote_users")
-    nixio.fs.remove(meshchat_path .. "/remote_files")
+    lib.unlink(meshchat_path .. "/remote_messages")
+    lib.unlink(meshchat_path .. "/remote_users")
+    lib.unlink(meshchat_path .. "/remote_files")
 
-    nixio.nanosleep(poll_interval, 0)
+    -- sleep for poll_interval seconds
+    os.execute('sleep ' .. poll_interval .. ' >/dev/null 2>&1')
 end

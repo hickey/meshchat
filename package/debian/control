@@ -1,0 +1,9 @@
+Package: meshchat
+Version:
+Depends: lua5.4, nginx
+Source: package/meshchat
+Section: net
+Priority: optional
+Maintainer: Gerard Hickey <hickey@kinetic-compute.com>
+Architecture: all
+Description: P2P distributed chat for mesh networks

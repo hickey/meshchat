@@ -1,0 +1,6 @@
+#!/bin/sh
+
+/etc/init.d/meshchatsync enable
+/etc/init.d/meshchatsync start
+
+exit 0

@@ -37,27 +37,29 @@
 
 package.path = package.path .. ";/www/cgi-bin/?.lua"
 
-require('luci.http')
-local json = require("luci.jsonc")
-require("nixio")
+local json = require("json")
+local lib = require("meshchatlib")
+local url = require("net/url")
 require("meshchatconfig")
-require("meshchatlib")
 
 ---
 -- @module meshchat
 
 local query = {}
 local uploadfilename
-if os.getenv("QUERY_STRING") ~= "" or os.getenv("REQUEST_METHOD") == "POST" then
-    local request = luci.http.Request(nixio.getenv(),
-    function()
-        local v = io.read(1024)
-        if not v then
-            io.close()
-        end
-            return v
-        end
-    )
+
+if os.getenv("QUERY_STRING") ~= "" then
+    -- Process a GET request
+    query = url.parseQuery(os.getenv("QUERY_STRING"))
+elseif os.getenv("REQUEST_METHOD") == "POST" then
+    -- Process a POST request
+    local request = ''
+    while v = io.read(1024) do
+        request = request .. v
+    end
+
+    query = url.parseQuery(request)
+
     local fp
     request:setfilehandler(
         function(meta, chunk, eof)
@@ -65,7 +67,7 @@ if os.getenv("QUERY_STRING") ~= "" or os.getenv("REQUEST_METHOD") == "POST" then
                 if meta and meta.file then
                     uploadfilename = meta.file
                 end
-                nixio.fs.mkdir(tmp_upload_dir)
+                mkdir(tmp_upload_dir)
                 fp = io.open(tmp_upload_dir .. "/file", "w")
             end
             if chunk then
@@ -113,13 +115,13 @@ function config()
     local settings = {
         version = app_version,
         protocol_verison = protocol_version,
-        node = node_name(),
-        zone = zone_name(),
+        node = lib.node_name(),
+        zone = lib.zone_name(),
         default_channel = default_channel,
         debug = debug,
     }
 
-    print(json.stringify(settings))
+    print(json.encode(settings))
 end
 
 --- Send a message to the MeshChat instance.
@@ -166,21 +168,21 @@ function send_message()
         epoch = query.epoch
     end
 
-    get_lock()
+    lib.get_lock(lock_file)
 
     local f = io.open(messages_db_file, "a")
     if not f then
-        release_lock()
+        lib.release_lock(lock_file)
         -- TODO return a proper error code on failure
         die("Cannot send message")
     end
-    f:write(id .. "\t" .. epoch .. "\t" .. message .. "\t" .. query.call_sign .. "\t" .. node_name() .. "\t" .. platform .. "\t" .. query.channel .. "\n")
+    f:write(id .. "\t" .. epoch .. "\t" .. message .. "\t" .. query.call_sign .. "\t" .. lib.node_name() .. "\t" .. platform .. "\t" .. query.channel .. "\n")
     f:close()
 
-    sort_and_trim_db()
-    save_messages_db_version()
+    lib.sort_and_trim_db()
+    lib.save_messages_db_version()
 
-    release_lock()
+    lib.release_lock(lock_file)
 
     print([[{"status":200, "response":"OK"}]])
 end
@@ -220,9 +222,9 @@ function messages()
     print("\r")
     io.flush()
 
-    get_lock()
+    lib.get_lock(lock_file)
 
-    local node = node_name()
+    local node = lib.node_name()
 
     -- read in message DB and parse the contents
     local messages = {}
@@ -246,7 +248,7 @@ function messages()
         local users = {}
 
         -- read the users status file
-        if nixio.fs.stat(local_users_status_file) then
+        if lib.file_exists(local_users_status_file) then
             for line in io.lines(local_users_status_file)
             do
                 local call_sign = line:match("^([^\t]+)\t")
@@ -283,12 +285,12 @@ function messages()
         end
     end
 
-    release_lock()
+    lib.release_lock(lock_file)
 
     -- order messages according to time
     table.sort(messages, function(a, b) return a.epoch > b.epoch end)
 
-    output:write(json.stringify(messages))
+    output:write(json.encode(messages))
     output:flush()
 
 end
@@ -312,10 +314,10 @@ function sync_status()
     print("Content-type: application/json\r")
     print("\r")
 
-    get_lock()
+    lib.get_lock(lock_file)
 
     local status = {}
-    if nixio.fs.stat(sync_status_file) then
+    if lib.file_exists(sync_status_file) then
         for line in io.lines(sync_status_file)
         do
             local node, epoch = line:match("^(.*)\t(.*)$")
@@ -326,16 +328,16 @@ function sync_status()
         end
     end
 
-    release_lock()
+    lib.release_lock(lock_file)
 
     table.sort(status, function(a, b) return a.epoch > b.epoch end)
 
-    print(json.stringify(status))
+    print(json.encode(status))
 end
 
 --- Return a list of messages as text.
 function messages_raw()
-    get_lock()
+    lib.get_lock(lock_file)
 
     local md5 = file_md5(messages_db_file)
     local lines = {}
@@ -344,7 +346,7 @@ function messages_raw()
         lines[#lines + 1] = line
     end
 
-    release_lock()
+    lib.release_lock(lock_file)
 
     print("Content-MD5: " .. md5 .. "\r")
     print("Content-type: text/plain\r")
@@ -358,11 +360,11 @@ end
 
 --- Return the current MD5 has of the messages database.
 function messages_md5()
-    get_lock()
+    lib.get_lock(lock_file)
 
-    local md5 = file_md5(messages_db_file)
+    local md5 = lib.file_md5(messages_db_file)
 
-    release_lock()
+    lib.release_lock(lock_file)
 
     print("Content-type: text/plain\r")
     print("\r")
@@ -371,16 +373,16 @@ end
 
 --- Package the raw messages as the messages.txt file.
 function messages_download()
-    get_lock()
+    lib.get_lock()
 
-    local md5 = file_md5(messages_db_file)
+    local md5 = lib.file_md5(messages_db_file)
     local lines = {}
     for line in io.lines(messages_db_file)
     do
         lines[#lines + 1] = line
     end
 
-    release_lock()
+    lib.release_lock(lock_file)
 
     print("Content-MD5: " .. md5 .. "\r")
     print("Content-Disposition: attachment; filename=messages.txt;\r")
@@ -395,16 +397,16 @@ end
 
 --- Return the list of users as raw text.
 function users_raw()
-    get_lock()
+    lib.get_lock(lock_file)
 
-    local md5 = file_md5(local_users_status_file)
+    local md5 = lib.file_md5(local_users_status_file)
     local lines = {}
     for line in io.lines(local_users_status_file)
     do
         lines[#lines + 1] = line
     end
 
-    release_lock()
+    lib.release_lock(lock_file)
 
     print("Content-MD5: " .. md5 .. "\r")
     print("Content-type: text/plain\r")
@@ -438,7 +440,7 @@ function users()
     print("Content-type: application/json\r")
     print("\r")
 
-    get_lock()
+    lib.get_lock(lock_file)
 
     local users = {}
     for line in io.lines(local_users_status_file)
@@ -468,33 +470,33 @@ function users()
         end
     end
 
-    release_lock()
+    lib.release_lock(lock_file)
 
     table.sort(users, function(a, b) return a.epoch > b.epoch end)
 
-    print(json.stringify(users))
+    print(json.encode(users))
 end
 
 --- Return a list of files as plain text.
 function local_files_raw()
-    get_lock()
+    lib.get_lock(lock_file)
 
-    local tmp_file = meshchat_path .. "/meshchat_files_local." .. nixio.getpid()
+    local tmp_file = meshchat_path .. "/meshchat_files_local." .. math.random(5000)
     local f = io.open(tmp_file, "w")
     if not f then
         die("Cannot list local files")
     end
-    local name = node_name() .. ":" .. os.getenv("SERVER_PORT")
-    for file in nixio.fs.dir(local_files_dir)
+    local name = lib.node_name() .. ":" .. os.getenv("SERVER_PORT")
+    for file in lib.filelist(local_files_dir)
     do
-        local stat = nixio.fs.stat(local_files_dir .. "/" .. file)
+        local stat = lib.file_exists(local_files_dir .. "/" .. file)
         f:write(file .. "\t" .. name .. "\t" .. stat.size .. "\t" .. stat.mtime .. platform .. "\n")
     end
     f:close()
 
-    local md5 = file_md5(tmp_file)
+    local md5 = lib.file_md5(tmp_file)
 
-    release_lock()
+    lib.release_lock(lock_file)
 
     print("Content-MD5: " .. md5 .. "\r")
     print("Content-type: text/plain\r")
@@ -505,7 +507,7 @@ function local_files_raw()
         print(line)
     end
 
-    nixio.fs.remove(tmp_file)
+    lib.unlink(tmp_file)
 end
 
 --- Return a specified file as a download.
@@ -525,17 +527,17 @@ function file_download()
     local file = query.file
     local file_path = local_files_dir .. "/" .. file
 
-    if file == "" or not nixio.fs.stat(file_path) then
+    if file == "" or not lib.file_exists(file_path) then
         error("no file")
         return
     end
 
-    get_lock()
+    lib.get_lock(lock_file)
 
-    local md5 = file_md5(file_path)
+    local md5 = lib.file_md5(file_path)
     local f = io.open(file_path, "rb")
 
-    release_lock()
+    lib.release_lock(lock_file)
 
     print("Content-MD5: " .. md5 .. "\r")
     print("Content-Disposition: attachment; filename=\"" .. file .. "\";\r")
@@ -570,13 +572,13 @@ function files()
     print("Content-type: application/json\r")
     print("\r")
 
-    get_lock()
+    lib.get_lock(lock_file)
 
     local files = {}
-    local node = node_name() .. ":" .. os.getenv("SERVER_PORT")
-    for file in nixio.fs.dir(local_files_dir)
+    local node = lib.node_name() .. ":" .. os.getenv("SERVER_PORT")
+    for file in lib.filelist(local_files_dir)
     do
-        local stat = nixio.fs.stat(local_files_dir .. "/" .. file)
+        local stat = lib.file_exists(local_files_dir .. "/" .. file)
         files[#files + 1] = {
             file = file,
             epoch = stat.mtime,
@@ -586,7 +588,7 @@ function files()
         }
         files[#files]["local"] = 1
     end
-    for file in nixio.fs.dir(meshchat_path)
+    for file in lib.filelist(meshchat_path)
     do
         if file:match("^remote_files%.") then
             for line in io.lines(meshchat_path .. "/" .. file)
@@ -606,13 +608,13 @@ function files()
         end
     end
 
-    local stats = file_storage_stats()
+    local stats = lib.file_storage_stats()
 
-    release_lock()
+    lib.release_lock(lock_file)
 
     table.sort(files, function(a, b) return a.epoch > b.epoch end)
 
-    print(json.stringify({
+    print(json.encode({
         stats = stats,
         files = files
     }))
@@ -620,7 +622,7 @@ end
 
 --- Delete the specified file.
 function delete_file()
-    nixio.fs.remove(local_files_dir .. "/" .. query.file)
+    lib.unlink(local_files_dir .. "/" .. query.file)
     print("Content-type: application/json\r")
     print("\r")
     print([[{"status":200, "response":"OK"}]])
@@ -630,7 +632,7 @@ end
 function messages_version()
     print("Content-type: text/plain\r")
     print("\r")
-    print(get_messages_db_version())
+    print(lib.get_messages_db_version())
 end
 
 --- Return a JSON document of the messages database.
@@ -638,9 +640,9 @@ function messages_version_ui()
     print("Content-type: application/json\r")
     print("\r")
 
-    print(string.format([[{"messages_version":%s}]], get_messages_db_version()))
+    print(string.format([[{"messages_version":%s}]], lib.get_messages_db_version()))
 
-    get_lock()
+    lib.get_lock(lock_file)
 
     local users = {}
     for line in io.lines(local_users_status_file)
@@ -651,7 +653,7 @@ function messages_version_ui()
         end
     end
 
-    local node = node_name()
+    local node = lib.node_name()
     local epoch = os.time()
     if tonumber(query.epoch) > epoch then
         epoch = query.epoch
@@ -676,7 +678,7 @@ function messages_version_ui()
         f:close()
     end
 
-    release_lock()
+    lib.release_lock(lock_file)
 end
 
 --- Return a JSON document describing all the hosts.
@@ -699,7 +701,7 @@ function hosts()
     print("Content-type: application/json\r")
     print("\r")
 
-    local node = node_name()
+    local node = lib.node_name()
     local hosts = {}
     for line in io.lines("/var/dhcp.leases")
     do
@@ -711,10 +713,10 @@ function hosts()
         }
     end
 
-    for line in io.lines("/etc/config.mesh/_setup.dhcp.dmz")
+    for line in io.lines("/etc/mesh/_setup.dhcp.dmz")
     do
         local mac, num, hostname = line:match("^(%S+)%s(%S+)%s(%S+)$")
-        local ip = gethostbyname(hostname)
+        local ip = lib.gethostbyname(hostname)
         hosts[#hosts + 1] = {
             ip = ip,
             hostname = hostname,
@@ -722,7 +724,7 @@ function hosts()
         }
     end
 
-    for _, remote_node in ipairs(node_list())
+    for _, remote_node in ipairs(lib.node_list())
     do
         local f = io.popen("/usr/bin/curl --retry 0 --connect-timeout " .. connect_timeout .. " --speed-time " .. speed_time .. " --speed-limit " .. speed_limit .. " http://" .. remote_node .. ":8080/cgi-bin/meshchat?action=hosts_raw 2> /dev/null")
         if f then
@@ -743,7 +745,7 @@ function hosts()
 
     table.sort(hosts, function(a, b) return a.hostname < b.hostname end)
 
-    print(json.stringify(hosts))
+    print(json.encode(hosts))
 end
 
 --- Return a list of hosts as plain text.
@@ -761,10 +763,10 @@ function hosts_raw()
         }
     end
 
-    for line in io.lines("/etc/config.mesh/_setup.dhcp.dmz")
+    for line in io.lines("/etc/mesh/_setup.dhcp.dmz")
     do
         local mac, num, hostname = line:match("^(%S+)%s(%S+)%s(%S+)$")
-        local ip = gethostbyname(hostname)
+        local ip = lib.gethostbyname(hostname)
         hosts[#hosts + 1] = {
             ip = ip,
             hostname = hostname
@@ -779,19 +781,19 @@ end
 
 --- Store a file into the file directory.
 function upload_file()
-    local new_file_size = nixio.fs.stat(tmp_upload_dir .. "/file").size
+    local new_file_size = lib.file_exists(tmp_upload_dir .. "/file").size
 
-    get_lock()
+    lib.get_lock(lock_file)
 
-    local stats = file_storage_stats()
+    local stats = lib.file_storage_stats()
 
-    release_lock()
+    lib.release_lock(lock_file)
 
     print("Content-type: application/json\r")
     print("\r")
 
     if new_file_size > stats.files_free then
-        nixio.fs.remove(tmp_upload_dir .. "/file")
+        lib.unlink(tmp_upload_dir .. "/file")
         print([[{"status":500, "response":"Not enough storage, delete some files"}]])
     else
         local fi = io.open(tmp_upload_dir .. "/file", "r")
@@ -799,7 +801,7 @@ function upload_file()
         fo:write(fi:read("*a"))
         fi:close()
         fo:close()
-        nixio.fs.remove(tmp_upload_dir .. "/file")
+        lib.unlink(tmp_upload_dir .. "/file")
         print([[{"status":200, "response":"OK"}]])
     end
 end

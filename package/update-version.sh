@@ -39,6 +39,7 @@ echo "${version}" > VERSION
 echo "Updating code references to version ${version}"
 
 sed -i "s/^Version:.*/Version: $version/" $IPK_DIR/CONTROL/control
+sed -i "s/^Version:.*/Version: $version/" $IPK_DIR/DEBIAN/control
 
 # Update the version in meshchatconfig.lua if present
 if [[ -f $IPK_DIR/www/cgi-bin/meshchatconfig.lua ]]; then
