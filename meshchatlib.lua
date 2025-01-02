@@ -80,22 +80,12 @@ end
 -- @treturn string Name of MeshChat zone
 --
 function zone_name()
-    local dmz_mode = uci.cursor("/etc/config.mesh"):get("aredn", "@dmz[0]", "mode")
-    local servfile = "/etc/config.mesh/_setup.services.nat"
-    -- LAN mode is not set to NAT
-    if dmz_mode ~= "0" then
-        servfile = "/etc/config.mesh/_setup.services.dmz"
-    end
-    if nixio.fs.access(servfile) then
-        for line in io.lines(servfile)
-        do
-            -- this will match the new service names with the icon metadata
-            -- in this case we are using a space or a pipe to terminate
-            -- the service name
-            local zone = line:match("^(.-)[%s%|].*|meshchat$")
-            if zone then
-                return zone
-            end
+    local services = uci.cursor("/etc/config.mesh"):get("setup", "services", "service") or {}
+    for _, service in ipairs(services)
+    do
+        local zone = service:match("^(.*)%s+%[.+%]|.*|.*|.*|.*|meshchat$") or service:match("^(.*)|.*|.*|.*|.*|meshchat$")
+        if zone then
+            return zone
         end
     end
     return "MeshChat"

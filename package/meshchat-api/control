@@ -1,6 +1,6 @@
 Package: meshchat-api
 Version:
-Depends: lua
+Depends: lua, luci-lib-base
 Provides:
 Source: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY
 Section: net
